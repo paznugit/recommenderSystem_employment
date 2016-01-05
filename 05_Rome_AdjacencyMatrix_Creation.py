@@ -54,7 +54,10 @@ for rome in listRefRome:
     dictRome[rome] = listUsers
    
 # Now let's create the adjacency matrix
-
+for rome1 in listRefRome:
+    for rome2 in listRefRome:
+        if rome1 == rome2:
+            
     
 # Algo:
 # Pour chaque code ROME, générer une liste de user associé (via un dictionnaire)
