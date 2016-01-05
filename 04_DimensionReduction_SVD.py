@@ -55,6 +55,7 @@ m = coo_matrix((vals, (rows, cols)), shape=shape)
 
 for k in range(1,601,20):
     u,s,vt = svds(m,k=k)
+    
     print "k=%i" %k
     sumSq = 0
     for value in s:
