@@ -58,16 +58,22 @@ dict_r = {}
 for rome1 in listRefRome:
     for rome2 in listRefRome:
         if rome1 == rome2:
-            # In the diagonal, we store the nuber of user that have applied to the job
-            dict_r[rome1,rome2] = len(set(dictRome[rome1]))
+            # In the diagonal, we store the number of user that have applied to the job
+            #dict_r[rome1,rome2] = len(set(dictRome[rome1]))
+            rome1 = rome2
         else:
             setuser1 = set(dictRome[rome1])
             setuser2 = set(dictRome[rome1])
             nbuserIntersect = len(setuser1.intersection(setuser2))
             nbuser1 = len(setuser1)
             nbuser2 = len(setuser2)
-            r = 2*nbuserIntersect/float(nbuser1+nbuser2)
-            dict_r[rome1,rome2] = r
+            r = 2*100*nbuserIntersect/float(nbuser1+nbuser2)
+            if r > 20:
+                dict_r[rome1,rome2] = r
+                
+for romes, r in dict_r.iteritems():
+    print romes+","+("%1.0f"%r)
+    
 # Algo:
 # Pour chaque code ROME, générer une liste de user associé (via un dictionnaire)
 # Pour la génération de l'adjacency matrix:
