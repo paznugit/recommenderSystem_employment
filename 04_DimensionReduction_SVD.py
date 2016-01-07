@@ -53,7 +53,7 @@ m = coo_matrix((vals, (rows, cols)), shape=shape)
 # => Memory error
 #sumSq = np.square(LA.norm(s,ord =None))
 
-for k in range(381,601,20):
+for k in range(441,601,20):
     u,s,vt = svds(m,k=k)
     
     print "k=%i" %k
