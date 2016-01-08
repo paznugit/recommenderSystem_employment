@@ -52,6 +52,7 @@ for rome in listRefRome:
             
     listUsers = list(df_utility.loc[df_utility['JOBOFFER_ID'].isin(listJobOfferAssociated)]['INDIV_ID'])
     dictRome[rome] = listUsers
+    print "For Rome %s, number of users %i" % (rome,len(listUsers))
    
 dict_r = {}
 # Now let's create the adjacency matrix
@@ -67,9 +68,11 @@ for rome1 in listRefRome:
             nbuserIntersect = len(setuser1.intersection(setuser2))
             nbuser1 = len(setuser1)
             nbuser2 = len(setuser2)
-            r = 2*100*nbuserIntersect/float(nbuser1+nbuser2)
-            if r > 20:
-                dict_r[rome1,rome2] = r
+            sumuser = nbuser1 + nbuser2
+            if sumuser > 0:
+                r = 2*100*nbuserIntersect/float(sumuser)
+                if r > 0:
+                    dict_r[rome1,rome2] = r
                 
 for romes, r in dict_r.iteritems():
     print romes+","+("%1.0f"%r)
