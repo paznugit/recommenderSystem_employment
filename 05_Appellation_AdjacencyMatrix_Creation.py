@@ -33,38 +33,38 @@ columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
 df_offre = pd.read_csv(csv_input, names = columnNames)
 
 listOffreId = list(df_offre['kc_offre'])
-listRome = list(df_offre['dc_rome_id'])
+listApp = list(df_offre['dc_appelationrome_id'])
 nbOffre = len(listOffreId)
 
 #dictOffre = dict(zip(listOffreId,listRome))
 
-listRefRome = list(pd.unique(df_offre['dc_rome_id'].values))
+listRefApp = list(pd.unique(df_offre['dc_rome_id'].values))
 
-dictRome = {}
+dictApp = {}
 
 # For each 'code Rome' we retrieve the list of users that that applied to
 # a job offer link to this 'code Rome'
-for rome in listRefRome:
+for appellation in listRefApp:
     listJobOfferAssociated = []
     for i in range(nbOffre):
-        if listRome[i] == rome:
+        if listApp[i] == appellation:
             listJobOfferAssociated.append(listOffreId[i])
             
     listUsers = list(df_utility.loc[df_utility['JOBOFFER_ID'].isin(listJobOfferAssociated)]['INDIV_ID'])
-    dictRome[rome] = listUsers
-    print "For Rome %s, number of users %i" % (rome,len(listUsers))
+    dictApp[appellation] = listUsers
+    print "For Appellation %s, number of users %i" % (appellation,len(listUsers))
    
 dict_r = {}
 # Now let's create the adjacency matrix
-for rome1 in listRefRome:
-    for rome2 in listRefRome:
-        if rome1 == rome2:
+for app1 in listRefApp:
+    for app2 in listRefApp:
+        if app1 == app1:
             # In the diagonal, we store the number of user that have applied to the job
-            #dict_r[rome1,rome2] = len(set(dictRome[rome1]))
-            rome1 = rome2
+            #dict_r[app1,app2] = len(set(dictApp[app1]))
+            app1 = app1
         else:
-            setuser1 = set(dictRome[rome1])
-            setuser2 = set(dictRome[rome2])
+            setuser1 = set(dictApp[app1])
+            setuser2 = set(dictApp[app2])
             nbuserIntersect = len(setuser1.intersection(setuser2))
             nbuser1 = len(setuser1)
             nbuser2 = len(setuser2)
@@ -72,10 +72,10 @@ for rome1 in listRefRome:
             if sumuser > 0:
                 r = 2*100*nbuserIntersect/float(sumuser)
                 if r > 0:
-                    dict_r[rome1,rome2] = r
+                    dict_r[app1,app2] = r
                 
-for romes, r in dict_r.iteritems():
-    print romes+","+("%1.0f"%r)
+for app1, r in dict_r.iteritems():
+    print app1+","+("%1.0f"%r)
     
 # Algo:
 # Pour chaque code ROME, générer une liste de user associé (via un dictionnaire)

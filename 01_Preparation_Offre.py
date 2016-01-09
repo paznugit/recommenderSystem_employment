@@ -5,8 +5,8 @@ Created on Fri Dec 18 09:15:05 2015
 @author: IGPL3460
 """
 
-csv_input = '../input/dm_off.csv'
-csv_cible = '../input/dm_off_ng.csv'
+csv_input = '../input/dm_off_52.csv'
+csv_cible = '../input/dm_off_52_ng.csv'
 
 #==============================================================================
 # Convert a file which represent:

@@ -10,8 +10,8 @@ from random import shuffle
 import pickle
 import numpy as np
 
-csv_input = '../input/dm_mec.csv'
-csv_cible = '../input/dm_mec_ng.csv'
+csv_input = '../input/dm_mec_52.csv'
+csv_cible = '../input/dm_mec_52_ng.csv'
 
 #==============================================================================
 # Convert a file which represent:
@@ -55,8 +55,7 @@ dictOffre = dict(zip(listOffre,listIndex))
 indiv_id = list(dataframe.apply(lambda x:  dictIndiv[x['DN_INDIVIDU_NATIONAL']],axis=1))
 job_id = list(dataframe.apply(lambda x: dictOffre[x['KC_OFFRE_ID']],axis=1))
 score = list(dataframe['SCORE'])
-print len(job_id)
-print len(np.unique(job_id))
+
 dataframe = pd.DataFrame(data = {'INDIV_ID': indiv_id, 'JOBOFFER_ID': job_id, 'SCORE': score})
 #dataframe = dataframe.drop(['DN_INDIVIDU_NATIONAL','KC_OFFRE_ID'], axis=1)
 

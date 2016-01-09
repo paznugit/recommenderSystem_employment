@@ -8,10 +8,10 @@ Created on Tue Dec 29 10:48:11 2015
 import pandas as pd
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import svds
-#from scipy import linalg as LA
+from scipy import linalg as LA
 import numpy as np
 
-csv_input = '../input/dm_mec_ng_bo.csv'
+csv_input = '../input/dm_mec_21_ng_bo.csv'
 
 #==============================================================================
 # Apply dimensionnality reduction
@@ -52,16 +52,18 @@ m = coo_matrix((vals, (rows, cols)), shape=shape)
 #u,s,v = LA.svd(m.todense(), full_matrices = False, compute_uv = False)
 # => Memory error
 #sumSq = np.square(LA.norm(s,ord =None))
+#print sumSq
 
-for k in range(441,601,20):
-    u,s,vt = svds(m,k=k)
-    
-    print "k=%i" %k
-    sumSq = 0
-    for value in s:
-        sumSq += np.square(value)
-    #energy = 100*sumSq0/float(sumSq)
-    print "sum of square: %1.2f" % sumSq
+if True:
+    for k in range(601,701,20):
+        u,s,vt = svds(m,k=k)
+        
+        print "k=%i" %k
+        sumSq = 0
+        for value in s:
+            sumSq += np.square(value)
+        #energy = 100*sumSq0/float(sumSq)
+        print "sum of square: %1.2f" % sumSq
     
 #a = (u.dot(np.diag(s))).dot(vt)
 # => Memory Error
