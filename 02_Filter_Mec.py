@@ -10,8 +10,8 @@ from random import shuffle
 import pickle
 import numpy as np
 
-csv_input = '../input/dm_mec_52.csv'
-csv_cible = '../input/dm_mec_52_ng.csv'
+csv_input = '../input/dm_mec_21.csv'
+csv_cible = '../input/dm_mec_21_ng.csv'
 
 #==============================================================================
 # Convert a file which represent:
@@ -60,10 +60,10 @@ dataframe = pd.DataFrame(data = {'INDIV_ID': indiv_id, 'JOBOFFER_ID': job_id, 'S
 #dataframe = dataframe.drop(['DN_INDIVIDU_NATIONAL','KC_OFFRE_ID'], axis=1)
 
 # We save the indiv dictionnary
-outputIndiv = open('../input/indiv_dict.pkl', 'wb')
+outputIndiv = open('../input/indiv_dict_21.pkl', 'wb')
 pickle.dump(dictIndiv, outputIndiv)
 outputIndiv.close()
-with open('../input/indiv_dict.csv', 'w') as outfile:
+with open('../input/indiv_dict_21.csv', 'w') as outfile:
     for key,value in dictIndiv.iteritems():
         outfile.write("%i"%key)
         outfile.write(",")
@@ -71,10 +71,10 @@ with open('../input/indiv_dict.csv', 'w') as outfile:
         outfile.write("\n")
    
 # We save the job offer dictionnary     
-outputJob = open('../input/joboffer_dict.pkl', 'wb')
+outputJob = open('../input/joboffer_dict_21.pkl', 'wb')
 pickle.dump(dictOffre, outputJob)
 outputJob.close()
-with open('../input/joboffer_dict.csv', 'w') as outfile:
+with open('../input/joboffer_dict_21.csv', 'w') as outfile:
     for key,value in dictOffre.iteritems():
         outfile.write(str(key))
         outfile.write(",")

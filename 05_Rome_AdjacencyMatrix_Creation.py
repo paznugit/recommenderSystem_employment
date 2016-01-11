@@ -14,11 +14,11 @@ import numpy as np
 
 
 # Extract the utility matrix (link between individual and job offer)
-csv_input = '../input/dm_mec_ng_bo.csv'
+csv_input = '../input/dm_mec_21_ng_bo.csv'
 df_utility = pd.read_csv(csv_input)
 
 # Extract the utility matrix (link between individual and job offer)
-csv_input = '../input/dm_off_ng.csv'
+csv_input = '../input/dm_off_21_ng.csv'
 columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
                'dc_typexperienceprof_id','experienceMois','dc_rome_id',
                'dc_appelationrome_id','dc_naturecontrat_id',
@@ -36,6 +36,11 @@ listOffreId = list(df_offre['kc_offre'])
 listRome = list(df_offre['dc_rome_id'])
 nbOffre = len(listOffreId)
 
+# Let's retrieve the conversion dictionnary of job offer
+csv_input = '../input/joboffer_dict_21.csv'
+df_convertJobOffer = pd.read_csv(csv_input, names = ['KC_OFFRE_ID','JOBOFFER_ID'])
+dictOffreConvert = dict(zip(list(df_convertJobOffer['KC_OFFRE_ID']),list(df_convertJobOffer['JOBOFFER_ID'])))
+
 #dictOffre = dict(zip(listOffreId,listRome))
 
 listRefRome = list(pd.unique(df_offre['dc_rome_id'].values))
@@ -48,12 +53,13 @@ for rome in listRefRome:
     listJobOfferAssociated = []
     for i in range(nbOffre):
         if listRome[i] == rome:
-            listJobOfferAssociated.append(listOffreId[i])
+            if listOffreId[i] in dictOffreConvert:
+                listJobOfferAssociated.append(dictOffreConvert[listOffreId[i]])
             
-    listUsers = list(df_utility.loc[df_utility['JOBOFFER_ID'].isin(listJobOfferAssociated)]['INDIV_ID'])
-    dictRome[rome] = listUsers
-    print "For Rome %s, number of users %i" % (rome,len(listUsers))
-   
+    setUsers = set(list(df_utility.loc[df_utility['JOBOFFER_ID'].isin(listJobOfferAssociated)]['INDIV_ID']))
+    dictRome[rome] = setUsers
+    print "For Rome %s, number of application %i" % (rome,len(setUsers))
+
 dict_r = {}
 # Now let's create the adjacency matrix
 for rome1 in listRefRome:
@@ -63,19 +69,19 @@ for rome1 in listRefRome:
             #dict_r[rome1,rome2] = len(set(dictRome[rome1]))
             rome1 = rome2
         else:
-            setuser1 = set(dictRome[rome1])
-            setuser2 = set(dictRome[rome2])
+            setuser1 = dictRome[rome1]
+            setuser2 = dictRome[rome2]
             nbuserIntersect = len(setuser1.intersection(setuser2))
             nbuser1 = len(setuser1)
             nbuser2 = len(setuser2)
             sumuser = nbuser1 + nbuser2
             if sumuser > 0:
                 r = 2*100*nbuserIntersect/float(sumuser)
-                if r > 0:
+                if r > 39:
                     dict_r[rome1,rome2] = r
                 
 for romes, r in dict_r.iteritems():
-    print romes+","+("%1.0f"%r)
+    print romes[0]+","+romes[1]+","+("%1.0f"%r)
     
 # Algo:
 # Pour chaque code ROME, générer une liste de user associé (via un dictionnaire)
