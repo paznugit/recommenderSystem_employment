@@ -17,7 +17,7 @@ import numpy as np
 csv_input = '../input/dm_mec_21_ng_bo.csv'
 df_utility = pd.read_csv(csv_input)
 
-# Extract the utility matrix (link between individual and job offer)
+# Extract the job offer
 csv_input = '../input/dm_off_21_ng.csv'
 columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
                'dc_typexperienceprof_id','experienceMois','dc_rome_id',
@@ -41,14 +41,13 @@ csv_input = '../input/joboffer_dict_21.csv'
 df_convertJobOffer = pd.read_csv(csv_input, names = ['KC_OFFRE_ID','JOBOFFER_ID'])
 dictOffreConvert = dict(zip(list(df_convertJobOffer['KC_OFFRE_ID']),list(df_convertJobOffer['JOBOFFER_ID'])))
 
-#dictOffre = dict(zip(listOffreId,listRome))
-
 listRefRome = list(pd.unique(df_offre['dc_rome_id'].values))
 
 dictRome = {}
 
 # For each 'code Rome' we retrieve the list of users that that applied to
 # a job offer link to this 'code Rome'
+#listRefRome = ['J1505','J1506']
 for rome in listRefRome:
     listJobOfferAssociated = []
     for i in range(nbOffre):
@@ -77,11 +76,17 @@ for rome1 in listRefRome:
             sumuser = nbuser1 + nbuser2
             if sumuser > 0:
                 r = 2*100*nbuserIntersect/float(sumuser)
-                if r > 39:
+                if r > 20:
                     dict_r[rome1,rome2] = r
-                
-for romes, r in dict_r.iteritems():
-    print romes[0]+","+romes[1]+","+("%1.0f"%r)
+        
+with open('../input/affinity_Rome_matrix_21.csv', 'w') as outfile:
+    for romes, r in dict_r.iteritems():
+        outfile.write(romes[0])
+        outfile.write(",")
+        outfile.write(romes[1])
+        outfile.write(",")
+        outfile.write(("%1.0f"%r))
+        outfile.write("\n")
     
 # Algo:
 # Pour chaque code ROME, générer une liste de user associé (via un dictionnaire)
