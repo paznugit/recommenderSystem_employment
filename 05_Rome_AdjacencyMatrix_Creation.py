@@ -14,11 +14,11 @@ import numpy as np
 
 
 # Extract the utility matrix (link between individual and job offer)
-csv_input = '../input/dm_mec_21_ng_bo.csv'
+csv_input = '../input/dm_mec_ng_bo.csv'
 df_utility = pd.read_csv(csv_input)
 
 # Extract the job offer
-csv_input = '../input/dm_off_21_ng.csv'
+csv_input = '../input/dm_off_ng.csv'
 columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
                'dc_typexperienceprof_id','experienceMois','dc_rome_id',
                'dc_appelationrome_id','dc_naturecontrat_id',
@@ -37,7 +37,7 @@ listRome = list(df_offre['dc_rome_id'])
 nbOffre = len(listOffreId)
 
 # Let's retrieve the conversion dictionnary of job offer
-csv_input = '../input/joboffer_dict_21.csv'
+csv_input = '../input/joboffer_dict.csv'
 df_convertJobOffer = pd.read_csv(csv_input, names = ['KC_OFFRE_ID','JOBOFFER_ID'])
 dictOffreConvert = dict(zip(list(df_convertJobOffer['KC_OFFRE_ID']),list(df_convertJobOffer['JOBOFFER_ID'])))
 
@@ -79,7 +79,7 @@ for rome1 in listRefRome:
                 if r > 20:
                     dict_r[rome1,rome2] = r
         
-with open('../input/affinity_Rome_matrix_21.csv', 'w') as outfile:
+with open('../input/affinity_Rome_matrix.csv', 'w') as outfile:
     for romes, r in dict_r.iteritems():
         outfile.write(romes[0])
         outfile.write(",")
