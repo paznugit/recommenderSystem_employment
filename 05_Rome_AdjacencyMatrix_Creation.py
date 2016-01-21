@@ -72,10 +72,10 @@ for rome1 in listRefRome:
             setuser2 = dictRome[rome2]
             nbuserIntersect = len(setuser1.intersection(setuser2))
             nbuser1 = len(setuser1)
-            nbuser2 = len(setuser2)
-            sumuser = nbuser1 + nbuser2
-            if sumuser > 0:
-                r = 2*100*nbuserIntersect/float(sumuser)
+            #nbuser2 = len(setuser2)
+            #sumuser = nbuser1 + nbuser2
+            if nbuser1 > 0:
+                r = 100*nbuserIntersect/float(nbuser1)
                 if r > 20:
                     dict_r[rome1,rome2] = r
         

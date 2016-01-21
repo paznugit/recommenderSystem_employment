@@ -55,7 +55,7 @@ m = coo_matrix((vals, (rows, cols)), shape=shape)
 #print sumSq
 
 if True:
-    for k in range(601,701,20):
+    for k in [2001,2201,2401]:
         u,s,vt = svds(m,k=k)
         
         print "k=%i" %k

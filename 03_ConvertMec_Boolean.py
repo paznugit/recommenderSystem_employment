@@ -7,8 +7,8 @@ Created on Tue Dec 29 10:42:30 2015
 
 import pandas as pd
 
-csv_input = '../input/dm_mec_52_ng.csv'
-csv_cible = '../input/dm_mec_52_ng_bo.csv'
+csv_input = '../input/dm_mec_21_ng.csv'
+csv_cible = '../input/dm_mec_21_ng_bo.csv'
 
 #==============================================================================
 # Convert a file which represent:

@@ -7,11 +7,11 @@ Created on Tue Dec 29 09:27:56 2015
 
 import pandas as pd
 from random import shuffle
-import pickle
-import numpy as np
 
-csv_input = '../input/dm_mec_52.csv'
-csv_cible = '../input/dm_mec_52_ng.csv'
+csv_input = '../input/dm_mec_21.csv'
+csv_cible = '../input/dm_mec_21_ng.csv'
+csv_indiv_dict = '../input/indiv_dict_21.csv'
+csv_joboffer_dict = '../input/joboffer_dict_21.csv'
 
 #==============================================================================
 # Convert a file which represent:
@@ -36,7 +36,7 @@ print "nb offre: %i" % len(pd.unique(dataframe['KC_OFFRE_ID'].values))
 # Counting per individual the number of links
 count_mec = dataframe.groupby('DN_INDIVIDU_NATIONAL')['KC_OFFRE_ID'].count().reset_index()
 # Filter to get only the individuals with at least x links
-list_indiv = list(count_mec.loc[count_mec['KC_OFFRE_ID'] >= 5]['DN_INDIVIDU_NATIONAL'])
+list_indiv = list(count_mec.loc[count_mec['KC_OFFRE_ID'] >= candidature_threshold]['DN_INDIVIDU_NATIONAL'])
 dataframe = dataframe.loc[dataframe['DN_INDIVIDU_NATIONAL'].isin(list_indiv)]
 
 # Get the list of individu and produce a conversion index dictionnary
@@ -59,22 +59,22 @@ score = list(dataframe['SCORE'])
 dataframe = pd.DataFrame(data = {'INDIV_ID': indiv_id, 'JOBOFFER_ID': job_id, 'SCORE': score})
 #dataframe = dataframe.drop(['DN_INDIVIDU_NATIONAL','KC_OFFRE_ID'], axis=1)
 
-# We save the indiv dictionnary
+'''# We save the indiv dictionnary
 outputIndiv = open('../input/indiv_dict_52.pkl', 'wb')
 pickle.dump(dictIndiv, outputIndiv)
-outputIndiv.close()
-with open('../input/indiv_dict_52.csv', 'w') as outfile:
+outputIndiv.close()'''
+with open(csv_indiv_dict, 'w') as outfile:
     for key,value in dictIndiv.iteritems():
         outfile.write("%i"%key)
         outfile.write(",")
         outfile.write(str(value))
         outfile.write("\n")
    
-# We save the job offer dictionnary     
+'''# We save the job offer dictionnary     
 outputJob = open('../input/joboffer_dict_52.pkl', 'wb')
 pickle.dump(dictOffre, outputJob)
-outputJob.close()
-with open('../input/joboffer_dict_52.csv', 'w') as outfile:
+outputJob.close()'''
+with open(csv_joboffer_dict, 'w') as outfile:
     for key,value in dictOffre.iteritems():
         outfile.write(str(key))
         outfile.write(",")

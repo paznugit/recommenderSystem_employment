@@ -30,8 +30,7 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
-# TODO: Remove some line of utility dataframe to get a test data
-nbTestSet = 50000
+nbTestSet = 10000
 listCoordinateTestSet = []
 
 print "Creation of test set"

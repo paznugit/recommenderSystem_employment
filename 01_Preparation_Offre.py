@@ -4,9 +4,10 @@ Created on Fri Dec 18 09:15:05 2015
 
 @author: IGPL3460
 """
+import pandas as pd
 
-csv_input = '../input/dm_off_52.csv'
-csv_cible = '../input/dm_off_52_ng.csv'
+csv_input = '../input/dm_off_21.csv'
+csv_cible = '../input/dm_off_21_ng.csv'
 
 #==============================================================================
 # Convert a file which represent:
@@ -65,13 +66,14 @@ def convertExperience(dn_dureeminexperienceprof,dc_typdureeexperienceprof):
         duree = dn_dureeminexperienceprof
     return str(duree)
     
+
 with open(csv_cible, 'w') as outfile:
     with open(csv_input, 'r') as infile:
 
         i = 0
         for line in infile:
-            joboffer = line.split("\t")
-                          
+            joboffer = line.split("\t")           
+              
             experienceMois = convertExperience(joboffer[4],joboffer[5])
             dureeContratJour = convertDureeJour(joboffer[10],joboffer[11])
             
