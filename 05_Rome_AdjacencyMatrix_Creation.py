@@ -14,11 +14,12 @@ import numpy as np
 
 
 # Extract the utility matrix (link between individual and job offer)
-csv_input = '../input/dm_mec_ng_bo.csv'
+csv_input = '../input/dm_mec_52_ng_bo.csv'
+csv_joboffer = '../input/dm_off_52_ng.csv'
+csv_joboffer_dict = '../input/joboffer_dict_52.csv'
 df_utility = pd.read_csv(csv_input)
 
 # Extract the job offer
-csv_input = '../input/dm_off_ng.csv'
 columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
                'dc_typexperienceprof_id','experienceMois','dc_rome_id',
                'dc_appelationrome_id','dc_naturecontrat_id',
@@ -30,15 +31,14 @@ columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
                'dc_communelieutravail','dc_departementlieutravail',
                'dc_typelieutravail','dc_lbllieutravail']
 
-df_offre = pd.read_csv(csv_input, names = columnNames)
+df_offre = pd.read_csv(csv_joboffer, names = columnNames)
 
 listOffreId = list(df_offre['kc_offre'])
 listRome = list(df_offre['dc_rome_id'])
 nbOffre = len(listOffreId)
 
 # Let's retrieve the conversion dictionnary of job offer
-csv_input = '../input/joboffer_dict.csv'
-df_convertJobOffer = pd.read_csv(csv_input, names = ['KC_OFFRE_ID','JOBOFFER_ID'])
+df_convertJobOffer = pd.read_csv(csv_joboffer_dict, names = ['KC_OFFRE_ID','JOBOFFER_ID'])
 dictOffreConvert = dict(zip(list(df_convertJobOffer['KC_OFFRE_ID']),list(df_convertJobOffer['JOBOFFER_ID'])))
 
 listRefRome = list(pd.unique(df_offre['dc_rome_id'].values))
@@ -74,7 +74,7 @@ for rome1 in listRefRome:
             nbuser1 = len(setuser1)
             #nbuser2 = len(setuser2)
             #sumuser = nbuser1 + nbuser2
-            if nbuser1 > 0:
+            if nbuser1 > 20:
                 r = 100*nbuserIntersect/float(nbuser1)
                 if r > 20:
                     dict_r[rome1,rome2] = r
