@@ -17,6 +17,8 @@ import numpy as np
 csv_input = '../input/dm_mec_52_ng_bo.csv'
 csv_joboffer = '../input/dm_off_52_ng.csv'
 csv_joboffer_dict = '../input/joboffer_dict_52.csv'
+csv_cible = '../input/affinity_Rome_matrix_52.csv'
+
 df_utility = pd.read_csv(csv_input)
 
 # Extract the job offer
@@ -79,7 +81,7 @@ for rome1 in listRefRome:
                 if r > 20:
                     dict_r[rome1,rome2] = r
         
-with open('../input/affinity_Rome_matrix.csv', 'w') as outfile:
+with open(csv_cible, 'w') as outfile:
     for romes, r in dict_r.iteritems():
         outfile.write(romes[0])
         outfile.write(",")
