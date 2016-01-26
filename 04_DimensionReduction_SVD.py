@@ -10,7 +10,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import svds
 from scipy import linalg as LA
 import numpy as np
-
+import scipy.linalg.interpolative as sli
 csv_input = '../input/dm_mec_21_ng_bo.csv'
 
 #==============================================================================
@@ -55,7 +55,9 @@ m = coo_matrix((vals, (rows, cols)), shape=shape)
 #print sumSq
 
 if True:
-    for k in [2001,2201,2401]:
+    for k in [14000]:
+        '''rank = sli.estimate_rank(m,0.01)
+        print rank'''
         u,s,vt = svds(m,k=k)
         
         print "k=%i" %k
