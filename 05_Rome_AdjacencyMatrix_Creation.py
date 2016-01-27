@@ -14,10 +14,10 @@ import numpy as np
 
 
 # Extract the utility matrix (link between individual and job offer)
-csv_input = '../input/dm_mec_52_ng_bo.csv'
-csv_joboffer = '../input/dm_off_52_ng.csv'
-csv_joboffer_dict = '../input/joboffer_dict_52.csv'
-csv_cible = '../input/affinity_Rome_matrix_52.csv'
+csv_input = '../input/dm_mec_ng_bo.csv'
+csv_joboffer = '../input/dm_off_ng.csv'
+csv_joboffer_dict = '../input/joboffer_dict.csv'
+csv_cible = '../input/affinity_Rome_matrix.csv'
 
 df_utility = pd.read_csv(csv_input)
 
