@@ -16,6 +16,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing
 from sklearn.feature_extraction import DictVectorizer as DV
 
+
+number_neighbors = 20
+    
 csv_input = '../input/dm_mec_21_ng_bo.csv'
 csv_jobofferdict__input = '../input/joboffer_dict_21.csv'
 csv_dmoff_input = '../input/dm_off_21_ng.csv'
@@ -112,12 +115,10 @@ for joboffer_id in listJobOfferToTest:
     job_offerToAnalyse = joboffer_content[listeIndex]
 
     #print job_offerToAnalyse
-    number_neighbors = 20
     if len(job_offerToAnalyse) < 20:
         number_neighbors = len(job_offerToAnalyse)
     nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='cosine').fit(job_offerToAnalyse)
     distances, indices = nn.kneighbors(joboffer_content[indexoffre])
-    #print 
      
     listeKcOffre = list(df_offre.iloc[listeIndex[indices[0]]]['kc_offre'])
     listeIdOffre = list(df_convertJobOffer.loc[df_convertJobOffer['KC_OFFRE_ID'].isin(listeKcOffre)]['JOBOFFER_ID'])

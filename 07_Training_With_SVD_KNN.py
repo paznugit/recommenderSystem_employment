@@ -21,6 +21,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing
 from sklearn.feature_extraction import DictVectorizer as DV
 
+# Parameter of this algorithm: The number of dimension used for SVD
+k = 800
+number_neighbors = 20
+
 # Extract the utility matrix (link between individual and job offer)
 csv_input = '../input/dm_mec_21_ng_bo.csv'
 df_utility = pd.read_csv(csv_input)
@@ -62,8 +66,8 @@ shape = (nbIndiv, nbOffre)
 m = coo_matrix((vals, (rows, cols)), shape=shape)
 m = m.tocsr()
 
-# How many dimensions?
-k = 800
+nbTrainSet = len(listCoordinateTrainSet)  
+
 print "Computation of SVD"
 # Initialize the matrix using a singular value decomposition
 u,s,vt = svds(m,k = k)
@@ -76,17 +80,39 @@ print "Shape of P: %s" % str(P.shape)
 print "Shape of Q: %s" % str(Q.shape)
 
 # creation of the neghbour space
-number_neighbors = 20
-listeResult = []
-listesize = []
-nbsuccess = 0
+nbSuccessTestSet = 0
+nbSuccessTrainSet = 0
+
 nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='cosine').fit(P)
 
+# Computation in train set
+for (indiv,offre) in listCoordinateTrainSet:
+    # Let's retrieve the 20 more similar userProfile based on the jobofferProfile
+    distances, indices = nn.kneighbors(Q[offre])
+    
+    if indiv in indices:
+        nbSuccessTrainSet += 1
+              
+print "nbTrainSet = %i" % nbTrainSet
+print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
+print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))
 
+# Computation in test set
 for (indiv,offre) in listCoordinateTestSet:
     #prediction = P[indiv,:].dot(Q[:,offre])
-    distances, indices = nn.kneighbors(P[indiv])
+    # Let's retrieve the 20 more similar userProfile based on the jobofferProfile
+    distances, indices = nn.kneighbors(Q[offre])
     
+    if indiv in indices:
+        nbSuccessTestSet += 1
+        
+print "nbTestSet = %i" % nbTestSet
+print "nbSuccessTestSet = %i" % nbSuccessTestSet
+print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
+
+
+
+'''
     df_result = df_utility.iloc[indices[0]].groupby('JOBOFFER_ID')['INDIV_ID'].count().reset_index()
     setJobOfferToRecommend = set(df_result.loc[df_result['INDIV_ID'] >= 2]['JOBOFFER_ID'])  
     setJobOfferReel = set(df_utility.loc[df_utility['INDIV_ID'] == indiv]['JOBOFFER_ID'])
@@ -102,6 +128,6 @@ for (indiv,offre) in listCoordinateTestSet:
 print "Nombre de succès: %i" % nbsuccess
 print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
 print "Combien d'individus ont aboutis à une recommendation: %i" % len(listeResult)
-print "Adéquation moyen avec la réalité: %1.2f" % np.mean(listeResult)
+print "Adéquation moyen avec la réalité: %1.2f" % np.mean(listeResult)'''
 
 

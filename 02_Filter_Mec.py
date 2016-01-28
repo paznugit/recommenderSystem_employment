@@ -8,10 +8,10 @@ Created on Tue Dec 29 09:27:56 2015
 import pandas as pd
 from random import shuffle
 
-csv_input = '../input/dm_mec_21.csv'
-csv_cible = '../input/dm_mec_21_ng.csv'
-csv_indiv_dict = '../input/indiv_dict_21.csv'
-csv_joboffer_dict = '../input/joboffer_dict_21.csv'
+csv_input = '../input/dm_mec.csv'
+csv_cible = '../input/dm_mec_ng.csv'
+csv_indiv_dict = '../input/indiv_dict.csv'
+csv_joboffer_dict = '../input/joboffer_dict.csv'
 
 #==============================================================================
 # Convert a file which represent:
