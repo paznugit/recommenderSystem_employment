@@ -13,10 +13,10 @@ from scipy import linalg as LA
 import numpy as np
 
 # Parameter of this algorithm: The number of dimension used for SVD
-k = 800
+k = 50
 
 # Extract the utility matrix (link between individual and job offer)
-csv_input = '../input/dm_mec_21_ng_bo.csv'
+csv_input = '../input/dm_mec_21_ng.csv'
 df_utility = pd.read_csv(csv_input)
 
 # Get the shape of the utility matrix
@@ -33,7 +33,8 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
-nbTestSet = 10000
+nbTestSet = 500
+nbTrainSet = 2000
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -45,7 +46,6 @@ while n < nbTestSet:
     if (rows[rand],cols[rand]) not in listCoordinateTestSet:
         n += 1
         listCoordinateTestSet.append((rows[rand],cols[rand]))
-
 print "Creation of test set OK"
 
 # Creation of the train set
@@ -54,6 +54,10 @@ listCoordinateTrainSet = []
 for i in range(nbmec):
     if ((rows[i],cols[i])) not in listCoordinateTestSet:
         listCoordinateTrainSet.append((rows[i],cols[i]))
+        if i > nbTrainSet:
+            break
+
+nbTrainSet = len(listCoordinateTrainSet) 
 print "Creation of train set OK"
 
 shape = (nbIndiv, nbOffre)
@@ -61,10 +65,9 @@ m = coo_matrix((vals, (rows, cols)), shape=shape)
 m = m.tocsr()
 
 # SVD computation
-print "Computation of SVD"
+print "Initialization of P and Q via SVD"
 # Initialize the matrix using a singular value decomposition
 u,s,vt = svds(m,k = k)
-print "Computation of SVD OK"
 s = np.sqrt(s)
 # We're now looking for P and Q such as R = P.Qt
 P = (u.dot(np.diag(s)))
@@ -72,14 +75,42 @@ Q = (np.diag(s)).dot(vt)
 print "Shape of P: %s" % str(P.shape)
 print "Shape of Q: %s" % str(Q.shape)
 
-nbSuccessTestSet = 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''nbSuccessTestSet = 0
 nbSuccessTrainSet = 0
 
-nbTrainSet = len(listCoordinateTrainSet) 
 
 # Computation of prediction for train set
 listTrainSetResult = []
 print "Computation of success in train set"
+nbTrainSet = nbmec - nbTestSet
 print "nbTrainSet = %i" % nbTrainSet
 for (indiv,offre) in listCoordinateTrainSet:
     prediction = P[indiv,:].dot(Q[:,offre])
@@ -132,25 +163,8 @@ for (indiv,offre) in listCoordinateTestSet:
 recomean = np.mean(listNbRecommend)
 print "Nombre d'individus teste: %1.1f" % len(listNbRecommend)
 print "Nombre de reco moyen par individu: %1.1f" % recomean
-print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))
+print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))'''
 
-
-'''
-print "Computation of success in random data"
-nbData = 50000
-ntime = 0
-for i in range(nbData):
-    indiv = np.random.randint(0,nbIndiv)
-    offre = np.random.randint(0,nbOffre)
-    if (indiv,offre) not in listCoordinateTestSet: 
-        if (indiv,offre) not in listCoordinateTrainSet:
-            ntime += 1
-            prediction = P[indiv,:].dot(Q[:,offre])
-            if prediction > seuilSuccess:
-                nbPositifHorsSet += 1                
-print "Taux positif Hors Set: %1.1f" % (100*nbPositifHorsSet/float(ntime))
-print "nb Hors set = %i" % ntime
-print "nbPositifHorsSet = %i" % nbPositifHorsSet'''
 
 # Now let's look at a gradient descent to find P.Qt such as we always predict the
 # appropriate value of the utility matrix when known

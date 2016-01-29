@@ -45,7 +45,7 @@ print "number of job offers: %i" % nbOffre
 rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
-nbTestSet = 500
+nbTestSet = 10
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -66,7 +66,7 @@ listCoordinateTrainSet = []
 for i in range(nbmec):
     if ((rows[i],cols[i])) not in listCoordinateTestSet:
         listCoordinateTrainSet.append((rows[i],cols[i]))
-    if i > 1200:
+    if i > 5:
             break
 print "Creation of train set OK"
 
@@ -148,7 +148,7 @@ print "Iteration over each test set"
 print "nbTestSet = %i" % nbTestSet
 listeResult = []
 listesize = []
-for (indivId,joboffer_id) in listCoordinateTrainSet:
+for (indivId,joboffer_id) in listCoordinateTestSet:
      # We get the real offre_id
     kc_offre = dictOffreConvert[joboffer_id]
     offre = df_offre.loc[df_offre['kc_offre'] == kc_offre]
@@ -179,6 +179,8 @@ for (indivId,joboffer_id) in listCoordinateTrainSet:
     setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == joboffer_id]['INDIV_ID'])
     listesize.append(len(setIndividusToRecommend))
     if len(setIndividusToRecommend) != 0:
+        print setIndividusToRecommend
+        print setPostulantReel
         listeResult.append(len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
     
 print "nbSuccessTestSet = %i" % nbSuccessTestSet
