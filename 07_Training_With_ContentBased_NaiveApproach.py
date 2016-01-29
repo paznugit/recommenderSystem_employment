@@ -45,24 +45,36 @@ print "number of job offers: %i" % nbOffre
 rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
+nbTestSet = 500
+listCoordinateTestSet = []
 
-print "Creation of the matrix"
+# Creation of the test set
+print "Creation of test set"
+n = 0
+while n < nbTestSet:
+    rand = np.random.randint(0,nbmec)
+    vals[rand] = 0
+    if (rows[rand],cols[rand]) not in listCoordinateTestSet:
+        n += 1
+        listCoordinateTestSet.append((rows[rand],cols[rand]))
+
+print "Creation of test set OK"
+
+# Creation of the train set
+print "Creation of train set"
+listCoordinateTrainSet = []
+for i in range(nbmec):
+    if ((rows[i],cols[i])) not in listCoordinateTestSet:
+        listCoordinateTrainSet.append((rows[i],cols[i]))
+    if i > 1200:
+            break
+print "Creation of train set OK"
+
+nbTrainSet = len(listCoordinateTrainSet) 
+
 shape = (nbIndiv, nbOffre)
-print shape
-print max(rows)
-print max(cols)
 m = coo_matrix((vals, (rows, cols)), shape=shape)
 m = m.tocsr()
-
-print "creation of the job offer list that we want to test"
-nbJobOfferToTest = 500
-listJobOfferToTest = []
-n = 0
-while n < nbJobOfferToTest:
-    rand = np.random.randint(0,nbOffre)
-    if rand not in listJobOfferToTest:
-        n += 1
-        listJobOfferToTest.append(rand)
 
 # Let's retrieve the conversion dictionnary of job offer
 df_convertJobOffer = pd.read_csv(csv_jobofferdict__input, names = ['KC_OFFRE_ID','JOBOFFER_ID'])
@@ -94,9 +106,88 @@ listeSalaire = scaler.fit_transform(listeSalaire)
 #listeSalaire = preprocessing.minmax_scale(listeSalaire)
 joboffer_content = np.hstack((x_offre,listeSalaire.reshape((len(listeSalaire), 1))))
 
+
+nbSuccessTestSet = 0
+nbSuccessTrainSet = 0
+
 # Iterate over each job offer to test
-print "Iteration over each job offer we want to test"
+print "Iteration over each train set"
+print "nbTrainSet = %i" % nbTrainSet
+for (indivId,joboffer_id) in listCoordinateTrainSet:
+     # We get the real offre_id
+    kc_offre = dictOffreConvert[joboffer_id]
+    offre = df_offre.loc[df_offre['kc_offre'] == kc_offre]
+    indexoffre = offre.index[0]
+    coderome = list(offre['dc_rome_id'])[0]
+    codeapp = list(offre['dc_appelationrome_id'])[0]
+    #print "#######################################"
+    #print "We deal wih job offer %s: %s %s" % (kc_offre,coderome,str(codeapp))
+    
+    df_offre_comparison = df_offre.loc[df_offre['dc_rome_id'] == coderome]
+    #df_offre_comparison = df_offre.loc[df_offre['dc_appelationrome_id'] == codeapp]
+    listeIndex = df_offre_comparison.index
+    
+    job_offerToAnalyse = joboffer_content[listeIndex]
+
+    if len(job_offerToAnalyse) < 20:
+        number_neighbors = len(job_offerToAnalyse)
+    nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='cosine').fit(job_offerToAnalyse)
+    distances, indices = nn.kneighbors(joboffer_content[indexoffre])
+     
+    listeKcOffre = list(df_offre.iloc[listeIndex[indices[0]]]['kc_offre'])
+    listeIdOffre = list(df_convertJobOffer.loc[df_convertJobOffer['KC_OFFRE_ID'].isin(listeKcOffre)]['JOBOFFER_ID'])
+    df_result =  df_utility.loc[df_utility['JOBOFFER_ID'].isin(listeIdOffre)].groupby('INDIV_ID')['JOBOFFER_ID'].count().reset_index()
+    setIndividusToRecommend = set(df_result.loc[df_result['JOBOFFER_ID'] >= 2]['INDIV_ID'])
+    if indivId in setIndividusToRecommend:
+        nbSuccessTrainSet += 1
+        
+print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
+print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))
+        
+print "Iteration over each test set"
+print "nbTestSet = %i" % nbTestSet
 listeResult = []
+listesize = []
+for (indivId,joboffer_id) in listCoordinateTrainSet:
+     # We get the real offre_id
+    kc_offre = dictOffreConvert[joboffer_id]
+    offre = df_offre.loc[df_offre['kc_offre'] == kc_offre]
+    indexoffre = offre.index[0]
+    coderome = list(offre['dc_rome_id'])[0]
+    codeapp = list(offre['dc_appelationrome_id'])[0]
+    '''print "#######################################"
+    print "We deal wih job offer %s: %s %s" % (kc_offre,coderome,str(codeapp))'''
+    
+    df_offre_comparison = df_offre.loc[df_offre['dc_rome_id'] == coderome]
+    #df_offre_comparison = df_offre.loc[df_offre['dc_appelationrome_id'] == codeapp]
+    listeIndex = df_offre_comparison.index
+    
+    job_offerToAnalyse = joboffer_content[listeIndex]
+
+    if len(job_offerToAnalyse) < 20:
+        number_neighbors = len(job_offerToAnalyse)
+    nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='cosine').fit(job_offerToAnalyse)
+    distances, indices = nn.kneighbors(joboffer_content[indexoffre])
+     
+    listeKcOffre = list(df_offre.iloc[listeIndex[indices[0]]]['kc_offre'])
+    listeIdOffre = list(df_convertJobOffer.loc[df_convertJobOffer['KC_OFFRE_ID'].isin(listeKcOffre)]['JOBOFFER_ID'])
+    df_result =  df_utility.loc[df_utility['JOBOFFER_ID'].isin(listeIdOffre)].groupby('INDIV_ID')['JOBOFFER_ID'].count().reset_index()
+    setIndividusToRecommend = set(df_result.loc[df_result['JOBOFFER_ID'] >= 2]['INDIV_ID'])
+    if indivId in setIndividusToRecommend:
+        nbSuccessTestSet += 1
+        
+    setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == joboffer_id]['INDIV_ID'])
+    listesize.append(len(setIndividusToRecommend))
+    if len(setIndividusToRecommend) != 0:
+        listeResult.append(len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
+    
+print "nbSuccessTestSet = %i" % nbSuccessTestSet
+print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
+print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
+print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
+print "Adéquation moyen avec la réalité: %1.2f" % np.mean(listeResult)
+
+'''listeResult = []
 listesize = []
 for joboffer_id in listJobOfferToTest:
     # We get the real offre_id
@@ -132,22 +223,5 @@ for joboffer_id in listJobOfferToTest:
     #print setPostulantReel
     listesize.append(len(setIndividusToRecommend))
     if len(setIndividusToRecommend) != 0:
-        listeResult.append(len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
-
-
-print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
-print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
-print "Adéquation moyen avec la réalité: %1.2f" % np.mean(listeResult)
-'''# Creation of the neighborhood
-print "Creation of the neighborhood"
-
-#joboffer_matrix = df_offre[cols_to_retain].as_matrix()            
-#print joboffer_matrix[:50]
-
-
-
-
-'''
-
-
+        listeResult.append(len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))'''
 

@@ -111,7 +111,7 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
-nbTestSet = 2000
+nbTestSet = 5000
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -131,7 +131,7 @@ listCoordinateTrainSet = []
 for i in range(nbmec):
     if ((rows[i],cols[i])) not in listCoordinateTestSet:
         listCoordinateTrainSet.append((rows[i],cols[i]))
-        if i > 10000:
+        if i > 15000:
             break
 print "Creation of train set OK"
 
@@ -144,7 +144,6 @@ nbSuccessTrainSet = 0
 
 # Computation of prediction for train set
 listTrainSetResult = []
-print "Computation of success in train set"
 nbTrainSet = len(listCoordinateTrainSet)
 print "nbTrainSet = %i" % nbTrainSet
 for (indivId,jobOfferId) in listCoordinateTrainSet:

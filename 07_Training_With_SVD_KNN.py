@@ -23,7 +23,7 @@ from sklearn.feature_extraction import DictVectorizer as DV
 
 # Parameter of this algorithm: The number of dimension used for SVD
 k = 800
-number_neighbors = 20
+number_neighbors = 40
 
 # Extract the utility matrix (link between individual and job offer)
 csv_input = '../input/dm_mec_21_ng_bo.csv'
@@ -43,7 +43,7 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
-nbTestSet = 10000
+nbTestSet = 5000
 listCoordinateTestSet = []
 
 print "Creation of test set"
@@ -61,6 +61,8 @@ listCoordinateTrainSet = []
 for i in range(nbmec):
     if ((rows[i],cols[i])) not in listCoordinateTestSet:
         listCoordinateTrainSet.append((rows[i],cols[i]))
+        if i > 15000:
+            break
 print "Creation of train set OK"
 shape = (nbIndiv, nbOffre)
 m = coo_matrix((vals, (rows, cols)), shape=shape)
@@ -88,7 +90,7 @@ nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='c
 # Computation in train set
 for (indiv,offre) in listCoordinateTrainSet:
     # Let's retrieve the 20 more similar userProfile based on the jobofferProfile
-    distances, indices = nn.kneighbors(Q[offre])
+    distances, indices = nn.kneighbors(Q[:,offre])
     
     if indiv in indices:
         nbSuccessTrainSet += 1
@@ -101,7 +103,7 @@ print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainS
 for (indiv,offre) in listCoordinateTestSet:
     #prediction = P[indiv,:].dot(Q[:,offre])
     # Let's retrieve the 20 more similar userProfile based on the jobofferProfile
-    distances, indices = nn.kneighbors(Q[offre])
+    distances, indices = nn.kneighbors(Q[:,offre])
     
     if indiv in indices:
         nbSuccessTestSet += 1
