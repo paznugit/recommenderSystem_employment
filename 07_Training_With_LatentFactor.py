@@ -15,7 +15,7 @@ import numpy as np
 #from math import pow
 
 # Parameter of this algorithm: The number of dimension used for SVD
-k = 50
+k = 400
 lambda_r = 0.0001
 epsilon = 0.05
 niter = 200
@@ -159,18 +159,18 @@ print "Shape of Q: %s" % str(Q.shape)
 P,Q,loss = gradient(m, epsilon, lambda_r, niter, P_ini = P, Q_ini = Q, ndim = k,
                lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
 
-print np.sum(P)
-print np.sum(Q)
 print loss
 
-'''nbSuccessTestSet = 0
+listeResult = []
+listeResult2 = []
+listesize = []
+nbSuccessTestSet = 0
 nbSuccessTrainSet = 0
-
+print "k = %i" % k
 
 # Computation of prediction for train set
 listTrainSetResult = []
 print "Computation of success in train set"
-nbTrainSet = nbmec - nbTestSet
 print "nbTrainSet = %i" % nbTrainSet
 for (indiv,offre) in listCoordinateTrainSet:
     prediction = P[indiv,:].dot(Q[:,offre])
@@ -200,30 +200,32 @@ print "Computation of success in test set OK"
 print "nbSuccessTestSet = %i" % nbSuccessTestSet
 print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
 
-listeProfile = []
+listeOffre = []
 # For each individual in test set, let's retrieve the list of job offer we would recommend
 listNbRecommend = []
 for (indiv,offre) in listCoordinateTestSet:
-    if indiv in listeProfile:
+    if offre in listeOffre:
         # Already done: We continue
         continue
-    nbRecommend = 0
-    for jobOfferId in range(nbOffre):
-        # We don't want to look if the (indiv,offre) is in the train or test set
-        if jobOfferId == offre:
-            continue
-        if (indiv,jobOfferId) in listCoordinateTrainSet:
-            continue
-        prediction = P[indiv,:].dot(Q[:,offre])
-        if prediction > seuilSuccess:
-            nbRecommend += 1  
-    listNbRecommend.append(nbRecommend)
-    listeProfile.append(indiv)
+
+    listeOffre.append(offre)
     
-recomean = np.mean(listNbRecommend)
-print "Nombre d'individus teste: %1.1f" % len(listNbRecommend)
-print "Nombre de reco moyen par individu: %1.1f" % recomean
-print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))'''
+    setIndividusToRecommend = set()
+    for individ in range(nbIndiv):
+        prediction = P[individ,:].dot(Q[:,offre])
+        if prediction > seuilSuccess:
+            setIndividusToRecommend.add(individ)
+    
+    setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == offre]['INDIV_ID'])
+    listesize.append(len(setIndividusToRecommend))
+    if len(setIndividusToRecommend) != 0:
+        listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
+        listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
+print "Nombre d'offre test: %i" % len(listeOffre)
+print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
+print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
+print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
 
 
 # Now let's look at a gradient descent to find P.Qt such as we always predict the
