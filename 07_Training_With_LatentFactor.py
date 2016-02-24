@@ -9,47 +9,81 @@ Created on Tue Jan 05 13:40:03 2016
 import pandas as pd
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import svds
+from scipy.sparse.linalg import norm
 from scipy import linalg as LA
 import numpy as np
+#from math import pow
 
 # Parameter of this algorithm: The number of dimension used for SVD
 k = 50
+lambda_r = 0.0001
+epsilon = 0.05
+niter = 200
+stoch = True
 
-#==============================================================================
-# Fonction de cout
-#==============================================================================
-def loss_function(m, P, Q):
+def loss_function(m, P, Q, lambda_r):
     """ fonction de cout"""
-    return (y - predict(x, w)) ** 2
+    (rows,cols) = m.nonzero()
+    nb = len(rows)
+    values = []
+    for i in range(nb):
+        values.append(P[rows[i],:].dot(Q[:,cols[i]]))
+
+    return np.sum(np.power(m[rows,cols] - values,2)) + lambda_r*(np.sum(pow(P,2))+np.sum(pow(Q,2)))
+    
+def gr_loss_function(typeMatrice, id_val, m, P, Q, ndim, lambda_r):
+    """ Gradient de la fonction de cout"""
+    gr = 0
+    if typeMatrice == "P":
+        gr = np.zeros(ndim)
+        for k in range(ndim):
+            for o in m.getrow(id_val).indices:
+                gr[k] += 2*(P[id_val,:].dot(Q[:,o])-m[id_val,o])*Q[k,o]
+            gr[k] += 2*lambda_r*P[id_val,k]
+    else:
+        gr = np.zeros(ndim)
+        for k in range(ndim):
+            for i in m.getcol(id_val).indices:
+                gr[k] += 2*(P[i,:].dot(Q[:,id_val])-m[i,id_val])*P[i,k]
+            gr[k] += 2*lambda_r*Q[k,id_val]
+    return gr
     
 #==============================================================================
 # Algorithme descente de gradient
 #==============================================================================
-def gradient(x, y, epsilon, niter, P_ini, Q_ini, lfun, gr_lfun, stoch=True):
+def gradient(m, epsilon, lambda_r, niter, P_ini, Q_ini, ndim, lfun, gr_lfun, stoch=True):
     """ algorithme de descente du gradient:
-        - x : donnees
-        - y : label
-        - epsilon : facteur multiplicatif de descente
+        - m : matrice de donnée
+        - epsilon : Facteur multiplicatif de descente
+        - lambda_r : Facteur de regularisation
         - niter : nombre d'iterations
         - P_ini: P initial
         - Q_ini: Q initial
+        - ndim: P ndim
         - lfun : fonction de cout
         - gr_lfun : gradient de la fonction de cout
         - stoch : True : gradient stochastique
         """
     #
     #w = np.zeros((niter, P_ini.size))
-    w[0] = w_ini
+    (nx,ny) = m.shape
+    #w[0] = w_ini
     loss = np.zeros(niter)
-    loss[0] = lfun(x, y, w[0]).mean()
+    loss[0] = lfun(m, P_ini, Q_ini,lambda_r)
+        
     for i in range(1, niter):
         if stoch:
-            idx = [np.random.randint(x.shape[0])]
+            idx = np.random.randint(nx)
+            idy = np.random.randint(ny)
         else:
-            idx = np.arange(x.shape[0])
-        w[i, :] = w[i - 1, :] - epsilon * gr_lfun(x[idx, :], y[idx], w[i - 1, :])
-        loss[i] = lfun(x, y, w[i, :]).mean()
-    return w, loss
+            # TODO
+            idx = 0#$idx = np.arange(x.shape[0])
+        P[idx,:] = P[idx,:] - epsilon*gr_lfun("P",idx,m,P,Q,ndim,lambda_r)
+        Q[:,idy] = Q[:,idy] - epsilon*gr_lfun("Q",idy,m,P,Q,ndim,lambda_r)
+        #w[i, :] = w[i - 1, :] - epsilon * gr_lfun(x[idx, :], y[idx], w[i - 1, :])
+        loss[i] = lfun(m,P,Q,lambda_r)
+    #return w, loss
+    return P,Q,loss
     
 # Extract the utility matrix (link between individual and job offer)
 csv_input = '../input/dm_mec_21_ng.csv'
@@ -69,8 +103,8 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
-nbTestSet = 500
-nbTrainSet = 2000
+nbTestSet = 5000
+nbTrainSet = 1500
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -97,6 +131,17 @@ nbTrainSet = len(listCoordinateTrainSet)
 print "Creation of train set OK"
 
 shape = (nbIndiv, nbOffre)
+'''shape = (6,5)
+rows = [0,1,1,1,2,3,4,5,5]
+cols = [4,0,1,4,2,0,0,1,3]
+vals = [1,1,2,1,1,1,1,1,3]
+m = coo_matrix((vals, (rows, cols)), shape=shape)
+m = m.tocsr()
+#print m.shape
+P = np.array([[0,1],[0,1],[1,1],[1,2],[0,0],[0,2]])
+Q = np.array([[1,1,0,1,1],[1,3,1,0,1]])
+'''
+
 m = coo_matrix((vals, (rows, cols)), shape=shape)
 m = m.tocsr()
 
@@ -111,35 +156,12 @@ Q = (np.diag(s)).dot(vt)
 print "Shape of P: %s" % str(P.shape)
 print "Shape of Q: %s" % str(Q.shape)
 
+P,Q,loss = gradient(m, epsilon, lambda_r, niter, P_ini = P, Q_ini = Q, ndim = k,
+               lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print np.sum(P)
+print np.sum(Q)
+print loss
 
 '''nbSuccessTestSet = 0
 nbSuccessTrainSet = 0
