@@ -15,6 +15,42 @@ import numpy as np
 # Parameter of this algorithm: The number of dimension used for SVD
 k = 50
 
+#==============================================================================
+# Fonction de cout
+#==============================================================================
+def loss_function(m, P, Q):
+    """ fonction de cout"""
+    return (y - predict(x, w)) ** 2
+    
+#==============================================================================
+# Algorithme descente de gradient
+#==============================================================================
+def gradient(x, y, epsilon, niter, P_ini, Q_ini, lfun, gr_lfun, stoch=True):
+    """ algorithme de descente du gradient:
+        - x : donnees
+        - y : label
+        - epsilon : facteur multiplicatif de descente
+        - niter : nombre d'iterations
+        - P_ini: P initial
+        - Q_ini: Q initial
+        - lfun : fonction de cout
+        - gr_lfun : gradient de la fonction de cout
+        - stoch : True : gradient stochastique
+        """
+    #
+    #w = np.zeros((niter, P_ini.size))
+    w[0] = w_ini
+    loss = np.zeros(niter)
+    loss[0] = lfun(x, y, w[0]).mean()
+    for i in range(1, niter):
+        if stoch:
+            idx = [np.random.randint(x.shape[0])]
+        else:
+            idx = np.arange(x.shape[0])
+        w[i, :] = w[i - 1, :] - epsilon * gr_lfun(x[idx, :], y[idx], w[i - 1, :])
+        loss[i] = lfun(x, y, w[i, :]).mean()
+    return w, loss
+    
 # Extract the utility matrix (link between individual and job offer)
 csv_input = '../input/dm_mec_21_ng.csv'
 df_utility = pd.read_csv(csv_input)
@@ -74,6 +110,8 @@ P = (u.dot(np.diag(s)))
 Q = (np.diag(s)).dot(vt)
 print "Shape of P: %s" % str(P.shape)
 print "Shape of Q: %s" % str(Q.shape)
+
+
 
 
 

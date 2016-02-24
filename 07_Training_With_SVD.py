@@ -9,11 +9,10 @@ Created on Tue Jan 05 13:40:03 2016
 import pandas as pd
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import svds
-from scipy import linalg as LA
 import numpy as np
 
 # Parameter of this algorithm: The number of dimension used for SVD
-k = 800
+k = 2000
 
 # Extract the utility matrix (link between individual and job offer)
 csv_input = '../input/dm_mec_21_ng_bo.csv'
@@ -33,7 +32,7 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
-nbTestSet = 10000
+nbTestSet = 5000
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -66,73 +65,89 @@ print "Computation of SVD"
 u,s,vt = svds(m,k = k)
 print "Computation of SVD OK"
 s = np.sqrt(s)
+#print s
+#print s[-2:]
 # We're now looking for P and Q such as R = P.Qt
 P = (u.dot(np.diag(s)))
 Q = (np.diag(s)).dot(vt)
 print "Shape of P: %s" % str(P.shape)
 print "Shape of Q: %s" % str(Q.shape)
 
-nbSuccessTestSet = 0
-nbSuccessTrainSet = 0
-
 nbTrainSet = len(listCoordinateTrainSet) 
 
-# Computation of prediction for train set
-listTrainSetResult = []
-print "Computation of success in train set"
-print "nbTrainSet = %i" % nbTrainSet
-for (indiv,offre) in listCoordinateTrainSet:
-    prediction = P[indiv,:].dot(Q[:,offre])
-    listTrainSetResult.append(prediction)
+listeParameters = [1,2,5,10,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
 
-# Computation of seuilSuccess to have about 90% of success in train set
-q = 10
-seuilSuccess = float(np.percentile(listTrainSetResult,q))
-print "Seuil de succes positionne a: %1.5f" % seuilSuccess
-
-# Computation of success in train set
-for prediction in listTrainSetResult:
-    if prediction > seuilSuccess:
-        nbSuccessTrainSet += 1
-print "Computation of success in train set OK"
-print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
-print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))
+for k in listeParameters:
+    listeResult = []
+    listeResult2 = []
+    listesize = []
+    nbSuccessTestSet = 0
+    nbSuccessTrainSet = 0
+    print "k = %i" % k
     
-# Computation of success in test set
-print "Computation of success in test set"
-print "nbTestSet = %i" % nbTestSet
-for (indiv,offre) in listCoordinateTestSet:
-    prediction = P[indiv,:].dot(Q[:,offre])
-    if prediction > seuilSuccess:
-        nbSuccessTestSet += 1
-print "Computation of success in test set OK"
-print "nbSuccessTestSet = %i" % nbSuccessTestSet
-print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
-
-listeProfile = []
-# For each individual in test set, let's retrieve the list of job offer we would recommend
-listNbRecommend = []
-for (indiv,offre) in listCoordinateTestSet:
-    if indiv in listeProfile:
-        # Already done: We continue
-        continue
-    nbRecommend = 0
-    for jobOfferId in range(nbOffre):
-        # We don't want to look if the (indiv,offre) is in the train or test set
-        if jobOfferId == offre:
-            continue
-        if (indiv,jobOfferId) in listCoordinateTrainSet:
-            continue
-        prediction = P[indiv,:].dot(Q[:,offre])
+    # Computation of prediction for train set
+    listTrainSetResult = []
+    print "Computation of success in train set"
+    print "nbTrainSet = %i" % nbTrainSet
+    for (indiv,offre) in listCoordinateTrainSet:
+        prediction = P[indiv,-k:].dot(Q[-k:,offre])
+        listTrainSetResult.append(prediction)
+    
+    # Computation of seuilSuccess to have about 90% of success in train set
+    q = 10
+    seuilSuccess = float(np.percentile(listTrainSetResult,q))
+    print "Seuil de succes positionne a: %1.5f" % seuilSuccess
+    
+    # Computation of success in train set
+    for prediction in listTrainSetResult:
         if prediction > seuilSuccess:
-            nbRecommend += 1  
-    listNbRecommend.append(nbRecommend)
-    listeProfile.append(indiv)
+            nbSuccessTrainSet += 1
+    print "Computation of success in train set OK"
+    print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
+    print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))
+        
+    # Computation of success in test set
+    print "Computation of success in test set"
+    print "nbTestSet = %i" % nbTestSet
+    for (indiv,offre) in listCoordinateTestSet:
+        prediction = P[indiv,-k:].dot(Q[-k:,offre])
+        if prediction > seuilSuccess:
+            nbSuccessTestSet += 1
+    print "Computation of success in test set OK"
+    print "nbSuccessTestSet = %i" % nbSuccessTestSet
+    print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
     
-recomean = np.mean(listNbRecommend)
-print "Nombre d'individus teste: %1.1f" % len(listNbRecommend)
-print "Nombre de reco moyen par individu: %1.1f" % recomean
-print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))
+    listeOffre = []
+    # For each individual in test set, let's retrieve the list of job offer we would recommend
+    listNbRecommend = []
+    for (indiv,offre) in listCoordinateTestSet:
+        if offre in listeOffre:
+            # Already done: We continue
+            continue
+
+        listeOffre.append(offre)
+        
+        setIndividusToRecommend = set()
+        for individ in range(nbIndiv):
+            prediction = P[individ,-k:].dot(Q[-k:,offre])
+            if prediction > seuilSuccess:
+                setIndividusToRecommend.add(individ)
+        
+        setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == offre]['INDIV_ID'])
+        listesize.append(len(setIndividusToRecommend))
+        if len(setIndividusToRecommend) != 0:
+            listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
+            listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+    print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
+    print "Nombre d'offre test: %i" % len(listeOffre)
+    print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
+    print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
+    print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
+    
+    #àrecomean = np.mean(listNbRecommend)
+    #print "Nombre d'individus teste: %1.1f" % len(listNbRecommend)
+    #print "Nombre de reco moyen par individu: %1.1f" % recomean
+    #print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))
 
 
 '''

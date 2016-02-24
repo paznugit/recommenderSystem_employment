@@ -47,14 +47,12 @@ for i in range(len(listeRome1)):
 # - List of codeRome of the userProfile
 # - codeRome of the jobOfferProfile
 #==============================================================================
-def computeSimilarityBetweenJobOffer(userProfile,jobOfferProfile,listeCodeRome,codeRome, listGeo, geo):
-    similarity = 0
-    if codeRome in listeCodeRome:
-        if geo in listGeo:
-            similarity = spatial.distance.cosine(userProfile, jobOfferProfile)
+def computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
+                                     joboffer_content,joboffer_rome,joboffer_geo):
+    similarity = 1-spatial.distance.cosine(userProfile_content, joboffer_content)
+    similarity *= (1-spatial.distance.cosine(userProfile_rome, joboffer_rome))
+    similarity *= (1-spatial.distance.cosine(userProfile_geo, joboffer_geo))
     return similarity
-      
-
     
 # Extract the job offer
 print "Extract the file of job offer and vectorize it"
@@ -73,8 +71,11 @@ df_offre = pd.read_csv(csv_dmoff_input, names = columnNames)
 dictKcOffre_IndexOffre = dict(zip(list(df_offre['kc_offre']),df_offre.index))
 
 cols_to_retain = ['dc_typexperienceprof_id', 'dc_naturecontrat_id', 'dc_typecontrat_id',
-                  'dc_langue_1_id', 'dc_permis_1_id']      
-cat_df = df_offre[cols_to_retain]
+                  'dc_langue_1_id', 'dc_permis_1_id']  
+cols_to_retain = ['dn_frequencedeplacement','dn_typedeplacement','dc_naturecontrat_id',
+                  'dc_typecontrat_id','dc_langue_1_id', 'dc_permis_1_id','dc_qualification_id']
+
+cat_df = df_offre[cols_to_retain].astype(str)
 cat_dict = cat_df.T.to_dict().values()
 vectorizer = DV( sparse = False )
 x_offre = vectorizer.fit_transform(cat_dict)
@@ -87,12 +88,19 @@ scaler = StandardScaler(with_mean = False, with_std = True)
 listeSalaire = scaler.fit_transform(listeSalaire)
 #listeSalaire = preprocessing.minmax_scale(listeSalaire)
 joboffer_content = np.hstack((x_offre,listeSalaire.reshape((len(listeSalaire), 1)))) 
-    
-listeCodeRome = np.array(df_offre['dc_rome_id'])
-joboffer_content = np.hstack((joboffer_content,listeCodeRome.reshape((len(listeCodeRome), 1)))) 
 
-listeGeo = np.array(df_offre['dc_departementlieutravail'])
-joboffer_content = np.hstack((joboffer_content,listeGeo.reshape((len(listeGeo), 1)))) 
+df_rome = pd.get_dummies(df_offre['dc_rome_id'])
+joboffer_rome = df_rome.as_matrix()
+#print vectorizer.get_feature_names
+#listeCodeRome = np.array(df_offre['dc_rome_id'])
+#joboffer_content = np.hstack((joboffer_content,listeCodeRome.reshape((len(listeCodeRome), 1)))) 
+
+df_geo = pd.get_dummies(df_offre['dc_departementlieutravail'])
+joboffer_geo = df_geo.as_matrix()
+
+#joboffer_geo = vectorizer.fit_transform(df_offre['dc_departementlieutravail'].T.to_dict().values())
+#listeGeo = np.array(df_offre['dc_departementlieutravail'])
+#joboffer_content = np.hstack((joboffer_content,listeGeo.reshape((len(listeGeo), 1)))) 
 
 # Extract the utility matrix (link between individual and job offer)
 df_utility = pd.read_csv(csv_input)
@@ -151,44 +159,36 @@ for (indivId,jobOfferId) in listCoordinateTrainSet:
     listJobOfferId = df_utility.loc[df_utility['INDIV_ID'] == indivId]['JOBOFFER_ID']
     nboffre = 0
     first = True
-    listeCodeRome = []
-    listeGeo = []
-    '''print "######################"
-    print "IndivId: %i" % indivId
-    print "A postulé à:"'''
+
     for jobOfferId2 in listJobOfferId:
         if jobOfferId == jobOfferId2:
             continue
         nboffre += 1
         kc_offre_id = dictOffreConvert[jobOfferId2]
         indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
-        '''print (df_offre.loc[df_offre['kc_offre'] == kc_offre_id]).as_matrix()'''
         # We retrieve the job profile, everything but the last columns (code Rome)
         if first:
-            profile = joboffer_content[indexOffre][:-2]
+            profile_content = joboffer_content[indexOffre]
+            profile_rome = joboffer_rome[indexOffre]
+            profile_geo = joboffer_geo[indexOffre]
             first = False
         else:
-            profile += joboffer_content[indexOffre][:-2]
-        listeCodeRome.append(joboffer_content[indexOffre][-2])
-        listeGeo.append(joboffer_content[indexOffre][-1])
+            profile_content += joboffer_content[indexOffre]
+            profile_rome += joboffer_rome[indexOffre]
+            profile_geo += joboffer_geo[indexOffre]
     if nboffre == 0:
         # Shouldn't happen... but just in case
         print "Division by zero!"
         break
-    userProfile = profile/float(nboffre)
-    '''print "-----------------"
-    print "UserProfile:"
-    print userProfile'''
+    #print profile
+    userProfile_content = profile_content/float(nboffre)
+    userProfile_rome = profile_rome/float(nboffre)
+    userProfile_geo = profile_geo/float(nboffre)
     # Let's see if we would recommend this job offer:
     kc_offre_id = dictOffreConvert[jobOfferId]
-    '''print "Calcul pour cette offre:"
-    print (df_offre.loc[df_offre['kc_offre'] == kc_offre_id]).as_matrix()'''
     indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
-    jobOfferProfile = joboffer_content[indexOffre][:-2]
-    codeRome = joboffer_content[indexOffre][-2]
-    geo = joboffer_content[indexOffre][-1]
-    sim = computeSimilarityBetweenJobOffer(userProfile,jobOfferProfile,listeCodeRome,codeRome,listeGeo,geo)
-    '''print "Similarity avec userProfile: %1.3f" % sim'''
+    sim = computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
+                                            joboffer_content[indexOffre],joboffer_rome[indexOffre],joboffer_geo[indexOffre])
     listTrainSetResult.append(sim)
 
 # Computation of seuilSuccess to have about 90% of success in train set
@@ -213,8 +213,7 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
     listJobOfferId = df_utility.loc[df_utility['INDIV_ID'] == indivId]['JOBOFFER_ID']
     nboffre = 0
     first = True
-    listeCodeRome = []
-    listeGeo = []
+
     for jobOfferId2 in listJobOfferId:
         if jobOfferId == jobOfferId2:
             continue
@@ -223,27 +222,28 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
         indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
         # We retrieve the job profile, everything but the last columns (code Rome)
         if first:
-            profile = joboffer_content[indexOffre][:-2]
+            profile_content = joboffer_content[indexOffre]
+            profile_rome = joboffer_rome[indexOffre]
+            profile_geo = joboffer_geo[indexOffre]
             first = False
         else:
-            profile += joboffer_content[indexOffre][:-2]
-        listeCodeRome.append(joboffer_content[indexOffre][-2])
-        listeGeo.append(joboffer_content[indexOffre][-1])
+            profile_content += joboffer_content[indexOffre]
+            profile_rome += joboffer_rome[indexOffre]
+            profile_geo += joboffer_geo[indexOffre]
     if nboffre == 0:
         # Shouldn't happen... but just in case
         print "Division by zero!"
         break
-    userProfile = profile/float(nboffre)
-    #dictIndivProfile[indivId] = profile/float(nboffre)
+    userProfile_content = profile_content/float(nboffre)
+    userProfile_rome = profile_rome/float(nboffre)
+    userProfile_geo = profile_geo/float(nboffre)
     # Let's see if we would recommend this job offer:
     kc_offre_id = dictOffreConvert[jobOfferId]
     indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
-    jobOfferProfile = joboffer_content[indexOffre][:-2]
-    codeRome = joboffer_content[indexOffre][-2]
-    geo = joboffer_content[indexOffre][-1]
-    similarity = computeSimilarityBetweenJobOffer(userProfile,jobOfferProfile,listeCodeRome,codeRome,listeGeo,geo)
+    sim = computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
+                                            joboffer_content[indexOffre],joboffer_rome[indexOffre],joboffer_geo[indexOffre])
 
-    if similarity > seuilSuccess:
+    if sim > seuilSuccess:
         nbSuccessTestSet += 1
 print "Computation of success in test set OK"
 print "nbSuccessTestSet = %i" % nbSuccessTestSet
@@ -261,22 +261,30 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
     listJobOfferId = df_utility.loc[df_utility['INDIV_ID'] == indivId]['JOBOFFER_ID']
     nboffre = 0
     first = True
-    listeCodeRome = []
-    listeGeo = []
+
     for jobOfferId2 in listJobOfferId:
+        if jobOfferId == jobOfferId2:
+            continue
         nboffre += 1
         kc_offre_id = dictOffreConvert[jobOfferId2]
         indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
         # We retrieve the job profile, everything but the last columns (code Rome)
         if first:
-            profile = joboffer_content[indexOffre][:-2]
+            profile_content = joboffer_content[indexOffre]
+            profile_rome = joboffer_rome[indexOffre]
+            profile_geo = joboffer_geo[indexOffre]
             first = False
         else:
-            profile += joboffer_content[indexOffre][:-2]
-        listeCodeRome.append(joboffer_content[indexOffre][-2])
-        listeGeo.append(joboffer_content[indexOffre][-1])
-    # We then have the profile!!
-    userProfile = profile/float(nboffre)   
+            profile_content += joboffer_content[indexOffre]
+            profile_rome += joboffer_rome[indexOffre]
+            profile_geo += joboffer_geo[indexOffre]
+    if nboffre == 0:
+        # Shouldn't happen... but just in case
+        print "Division by zero!"
+        break
+    userProfile_content = profile_content/float(nboffre)
+    userProfile_rome = profile_rome/float(nboffre)
+    userProfile_geo = profile_geo/float(nboffre)
     listeProfile.append(indivId)
     
     # Then we look for recommendation!
@@ -289,35 +297,19 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
         kc_offre_id = dictOffreConvert[jobOfferId2]
         indexOffre = dictKcOffre_IndexOffre[kc_offre_id]   
         
-        jobOfferProfile = joboffer_content[indexOffre]
-        codeRome = jobOfferProfile[-2]
-        geo = jobOfferProfile[-1]
-        similarity = computeSimilarityBetweenJobOffer(userProfile, jobOfferProfile[:-2],listeCodeRome,codeRome,listeGeo,geo)
-        if similarity > seuilSuccess:
+        jobOfferProfile = [joboffer_content[indexOffre],joboffer_rome[indexOffre],joboffer_geo[indexOffre]]
+        sim = computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
+                                            joboffer_content[indexOffre],joboffer_rome[indexOffre],joboffer_geo[indexOffre])
+        
+        if sim > seuilSuccess:
             nbRecommend += 1
  
     listNbRecommend.append(nbRecommend)
    
 recomean = np.mean(listNbRecommend)
-print "Nombre d'individus teste: %1.1f" % len(listNbRecommend)
+print "Nombre d'individus teste: %1.1f" % len(listeProfile)
 print "Nombre de reco moyen par individu: %1.1f" % recomean
 print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 '''for (indivId,jobOfferId) in listCoordinateTestSet:
