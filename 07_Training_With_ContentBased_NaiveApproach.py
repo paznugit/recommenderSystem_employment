@@ -226,7 +226,7 @@ for number_neighbors in range(1,40):
         listesize.append(len(setIndividusToRecommend))
         if len(setIndividusToRecommend) != 0:
             listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
-            listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+        listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
     
     print "k = %i" % number_neighbors
     print "nbSuccessTestSet = %i" % nbSuccessTestSet

@@ -137,7 +137,7 @@ for k in listeParameters:
         listesize.append(len(setIndividusToRecommend))
         if len(setIndividusToRecommend) != 0:
             listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
-            listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+        listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
     print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
     print "Nombre d'offre test: %i" % len(listeOffre)
     print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)

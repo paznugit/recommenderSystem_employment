@@ -20,6 +20,7 @@ lambda_r = 0.0001
 epsilon = 0.05
 niter = 200
 stoch = True
+seuil_success = 3
 
 def loss_function(m, P, Q, lambda_r):
     """ fonction de cout"""
@@ -103,8 +104,10 @@ rows = list(df_utility['INDIV_ID'])
 cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
+shape = (nbIndiv, nbOffre)
+
 nbTestSet = 5000
-nbTrainSet = 1500
+#nbTrainSet = 1500
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -112,13 +115,13 @@ print "Creation of test set"
 n = 0
 while n < nbTestSet:
     rand = np.random.randint(0,nbmec)
-    vals[rand] = 0
-    if (rows[rand],cols[rand]) not in listCoordinateTestSet:
+    if vals[rand] >= seuil_success:
+        vals[rand] = 0
         n += 1
         listCoordinateTestSet.append((rows[rand],cols[rand]))
 print "Creation of test set OK"
 
-# Creation of the train set
+'''# Creation of the train set
 print "Creation of train set"
 listCoordinateTrainSet = []
 for i in range(nbmec):
@@ -128,9 +131,9 @@ for i in range(nbmec):
             break
 
 nbTrainSet = len(listCoordinateTrainSet) 
-print "Creation of train set OK"
+print "Creation of train set OK"'''
 
-shape = (nbIndiv, nbOffre)
+
 '''shape = (6,5)
 rows = [0,1,1,1,2,3,4,5,5]
 cols = [4,0,1,4,2,0,0,1,3]
@@ -168,7 +171,7 @@ nbSuccessTestSet = 0
 nbSuccessTrainSet = 0
 print "k = %i" % k
 
-# Computation of prediction for train set
+'''# Computation of prediction for train set
 listTrainSetResult = []
 print "Computation of success in train set"
 print "nbTrainSet = %i" % nbTrainSet
@@ -187,14 +190,14 @@ for prediction in listTrainSetResult:
         nbSuccessTrainSet += 1
 print "Computation of success in train set OK"
 print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
-print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))
+print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))'''
     
 # Computation of success in test set
 print "Computation of success in test set"
 print "nbTestSet = %i" % nbTestSet
 for (indiv,offre) in listCoordinateTestSet:
     prediction = P[indiv,:].dot(Q[:,offre])
-    if prediction > seuilSuccess:
+    if prediction >= seuil_success:
         nbSuccessTestSet += 1
 print "Computation of success in test set OK"
 print "nbSuccessTestSet = %i" % nbSuccessTestSet
@@ -213,14 +216,15 @@ for (indiv,offre) in listCoordinateTestSet:
     setIndividusToRecommend = set()
     for individ in range(nbIndiv):
         prediction = P[individ,:].dot(Q[:,offre])
-        if prediction > seuilSuccess:
+        if prediction >= seuil_success:
             setIndividusToRecommend.add(individ)
     
-    setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == offre]['INDIV_ID'])
+    setPostulantReel = set(df_utility.loc[(df_utility['JOBOFFER_ID'] == offre) & (df_utility['SCORE'] >= seuil_success)]['INDIV_ID'])
     listesize.append(len(setIndividusToRecommend))
     if len(setIndividusToRecommend) != 0:
         listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
-        listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+    listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+
 print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
 print "Nombre d'offre test: %i" % len(listeOffre)
 print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
