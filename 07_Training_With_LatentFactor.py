@@ -9,18 +9,17 @@ Created on Tue Jan 05 13:40:03 2016
 import pandas as pd
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import svds
-from scipy.sparse.linalg import norm
-from scipy import linalg as LA
 import numpy as np
 #from math import pow
 
 # Parameter of this algorithm: The number of dimension used for SVD
-k = 400
-lambda_r = 0.0001
-epsilon = 0.05
-niter = 200
+k = 800
+lambda_r = 0.00001
+epsilon = 0.5
+niter = 500
 stoch = True
 seuil_success = 3
+findBestParam = True
 
 def loss_function(m, P, Q, lambda_r):
     """ fonction de cout"""
@@ -106,7 +105,7 @@ vals = [float(x) for x in list(df_utility['SCORE'])]
 
 shape = (nbIndiv, nbOffre)
 
-nbTestSet = 5000
+'''nbTestSet = 5000
 #nbTrainSet = 1500
 listCoordinateTestSet = []
 
@@ -119,7 +118,7 @@ while n < nbTestSet:
         vals[rand] = 0
         n += 1
         listCoordinateTestSet.append((rows[rand],cols[rand]))
-print "Creation of test set OK"
+print "Creation of test set OK"'''
 
 '''# Creation of the train set
 print "Creation of train set"
@@ -145,52 +144,57 @@ P = np.array([[0,1],[0,1],[1,1],[1,2],[0,0],[0,2]])
 Q = np.array([[1,1,0,1,1],[1,3,1,0,1]])
 '''
 
-m = coo_matrix((vals, (rows, cols)), shape=shape)
-m = m.tocsr()
+if findBestParam:
+    m = coo_matrix((vals, (rows, cols)), shape=shape)
+    m = m.tocsr()
+     # SVD computation
+    print "Initialization of P and Q via SVD"
+    # Initialize the matrix using a singular value decomposition
+    u,s,vt = svds(m,k = k)
+    s = np.sqrt(s)
+    # We're now looking for P and Q such as R = P.Qt
+    P = (u.dot(np.diag(s)))
+    Q = (np.diag(s)).dot(vt)
+    print "Shape of P: %s" % str(P.shape)
+    print "Shape of Q: %s" % str(Q.shape)
+    
+    for lambda_r in [0.000001,0.00001,0.0001,0.001,0.01,0.1,0.5]:
+        for epsilon in [0.001,0.01,0.1,0.5,1]:
+            for niter in [50,100,200,500,1000,2000]:
+                P_new,Q_new,loss = gradient(m, epsilon, lambda_r, niter, P_ini = np.copy(P), Q_ini = np.copy(Q), ndim = k,
+                               lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
+                loss = loss[-1]
+                print "########################"
+                print lambda_r
+                print epsilon
+                print niter
+                print loss
+else:
+    m = coo_matrix((vals, (rows, cols)), shape=shape)
+    m = m.tocsr()
+    
+    # SVD computation
+    print "Initialization of P and Q via SVD"
+    # Initialize the matrix using a singular value decomposition
+    u,s,vt = svds(m,k = k)
+    s = np.sqrt(s)
+    # We're now looking for P and Q such as R = P.Qt
+    P = (u.dot(np.diag(s)))
+    Q = (np.diag(s)).dot(vt)
+    print "Shape of P: %s" % str(P.shape)
+    print "Shape of Q: %s" % str(Q.shape)
+    
+    P,Q,loss = gradient(m, epsilon, lambda_r, niter, P_ini = P, Q_ini = Q, ndim = k,
+                   lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
+    
+    print loss
 
-# SVD computation
-print "Initialization of P and Q via SVD"
-# Initialize the matrix using a singular value decomposition
-u,s,vt = svds(m,k = k)
-s = np.sqrt(s)
-# We're now looking for P and Q such as R = P.Qt
-P = (u.dot(np.diag(s)))
-Q = (np.diag(s)).dot(vt)
-print "Shape of P: %s" % str(P.shape)
-print "Shape of Q: %s" % str(Q.shape)
-
-P,Q,loss = gradient(m, epsilon, lambda_r, niter, P_ini = P, Q_ini = Q, ndim = k,
-               lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
-
-print loss
-
-listeResult = []
+'''listeResult = []
 listeResult2 = []
 listesize = []
 nbSuccessTestSet = 0
 nbSuccessTrainSet = 0
 print "k = %i" % k
-
-'''# Computation of prediction for train set
-listTrainSetResult = []
-print "Computation of success in train set"
-print "nbTrainSet = %i" % nbTrainSet
-for (indiv,offre) in listCoordinateTrainSet:
-    prediction = P[indiv,:].dot(Q[:,offre])
-    listTrainSetResult.append(prediction)
-
-# Computation of seuilSuccess to have about 90% of success in train set
-q = 10
-seuilSuccess = float(np.percentile(listTrainSetResult,q))
-print "Seuil de succes positionne a: %1.5f" % seuilSuccess
-
-# Computation of success in train set
-for prediction in listTrainSetResult:
-    if prediction > seuilSuccess:
-        nbSuccessTrainSet += 1
-print "Computation of success in train set OK"
-print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
-print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))'''
     
 # Computation of success in test set
 print "Computation of success in test set"
@@ -229,10 +233,6 @@ print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
 print "Nombre d'offre test: %i" % len(listeOffre)
 print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
 print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
-print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
-
-
-# Now let's look at a gradient descent to find P.Qt such as we always predict the
-# appropriate value of the utility matrix when known
+print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)'''
 
 

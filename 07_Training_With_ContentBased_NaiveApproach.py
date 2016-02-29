@@ -27,32 +27,6 @@ csv_input = '../input/dm_mec_21_ng_bo.csv'
 csv_jobofferdict__input = '../input/joboffer_dict_21.csv'
 csv_dmoff_input = '../input/dm_off_21_ng.csv'
 csv_rome_affinity_input = '../input/affinity_Rome_matrix.csv'
-
-# Extraction of the Rome affinity matrix
-ROME1 = 'ROME1'
-ROME2 = 'ROME2'
-SCORE = 'SCORE'
-df_rome_aff = pd.read_csv(csv_rome_affinity_input, names = [ROME1,ROME2,SCORE])
-listeRome1 = list(df_rome_aff[ROME1]) 
-listeRome2 = list(df_rome_aff[ROME2]) 
-listeScore = list(df_rome_aff[SCORE]) 
-dictRomeAffinity = {}
-for i in range(len(listeRome1)):
-    rome1= listeRome1[i]
-    rome2 = listeRome2[i]
-    dictRomeAffinity[(rome1,rome2)] = int(listeScore[i])
-    
-#==============================================================================
-# computeDistanceBetweenJobOffer
-# Function to compute the distance between 2 job offer
-#==============================================================================
-def computeDistanceBetweenJobOffer(jo1, jo2):
-    rome1 = jo1[0]
-    rome2 = jo2[0]
-    if (rome2,rome1) in dictRomeAffinity:
-        return dictRomeAffinity[(rome2,rome1)]*0.01*(1-spatial.distance.cosine(jo1[1:], jo2[1:]))
-    else:
-        return 0
     
 # Extract the utility matrix (link between individual and job offer)
 df_utility = pd.read_csv(csv_input)
@@ -118,6 +92,49 @@ columnNames = ['kc_offre','dn_frequencedeplacement','dn_typedeplacement',
                'dc_typelieutravail','dc_lbllieutravail']
 df_offre = pd.read_csv(csv_dmoff_input, names = columnNames)
 
+# Creation of a dictionnary Rome
+setRome = set(pd.unique(df_offre['dc_rome_id']))
+irome = 0
+dictRome = {}
+for rome in setRome:
+    dictRome[rome] = irome
+    irome += 1
+    
+# Extraction of the Rome affinity matrix
+ROME1 = 'ROME1'
+ROME2 = 'ROME2'
+SCORE = 'SCORE'
+df_rome_aff = pd.read_csv(csv_rome_affinity_input, names = [ROME1,ROME2,SCORE])
+listeRome1 = list(df_rome_aff[ROME1]) 
+listeRome2 = list(df_rome_aff[ROME2]) 
+listeScore = list(df_rome_aff[SCORE]) 
+dictRomeAffinity = {}
+nbRomeNonPresent = 0
+for i in range(len(listeRome1)):
+    if listeRome1[i] not in dictRome:
+        nbRomeNonPresent += 1
+    elif listeRome2[i] not in dictRome:
+        nbRomeNonPresent += 1
+    else:
+        rome1 = dictRome[listeRome1[i]]
+        rome2 = dictRome[listeRome2[i]]
+        dictRomeAffinity[(rome1,rome2)] = int(listeScore[i])
+print "Rome non présent: %i" % nbRomeNonPresent
+
+#==============================================================================
+# computeDistanceBetweenJobOffer
+# Function to compute the distance between 2 job offer
+#==============================================================================
+def computeDistanceBetweenJobOffer(jo1, jo2):
+    rome1 = jo1[0]
+    rome2 = jo2[0]
+    if rome1 == rome2:
+        return spatial.distance.cosine(jo1[1:], jo2[1:])
+    if (rome2,rome1) in dictRomeAffinity:
+        return (200-dictRomeAffinity[(rome2,rome1)])*0.01*(spatial.distance.cosine(jo1[1:], jo2[1:]))
+    else:
+        return 2
+
 cols_to_retain = ['dc_naturecontrat_id', 'dc_typecontrat_id','dc_langue_1_id', 'dc_permis_1_id']
 cols_to_retain = ['dn_frequencedeplacement']
 cols_to_retain = ['dn_frequencedeplacement','dn_typedeplacement','dc_naturecontrat_id', 'dc_typecontrat_id','dc_langue_1_id', 'dc_permis_1_id','dc_qualification_id']
@@ -135,7 +152,8 @@ joboffer_content = np.hstack((x_offre,listeSalaire.reshape((len(listeSalaire), 1
 
 #listRome = list(df_offre['dc_rome_id'])
 if ponderationMetier:
-    listRome = np.array(list(df_offre['dc_rome_id']))
+    listRome = df_offre.apply(lambda x: dictRome[x['dc_rome_id']] , axis = 1)
+    #listRome = np.array(list(df_offre['dc_rome_id']))
     joboffer_content = np.hstack((listRome.reshape((len(listRome), 1)),joboffer_content))
 
 nbSuccessTestSet = 0
@@ -191,12 +209,16 @@ for number_neighbors in range(1,40):
         coderome = list(offre['dc_rome_id'])[0]
         codeapp = list(offre['dc_appelationrome_id'])[0]
         
-        df_offre_comparison = df_offre.loc[df_offre['dc_rome_id'] == coderome]
-        #df_offre_comparison = df_offre.loc[df_offre['dc_appelationrome_id'] == codeapp]
-        #listeIndex = np.delete(df_offre_comparison.index,indexoffre)
-        listeIndex = list(df_offre_comparison.index)
-        listeIndex = np.delete(listeIndex,listeIndex.index(indexoffre))
-        job_offerToAnalyse = joboffer_content[listeIndex]
+        if ponderationMetier:
+            job_offerToAnalyse = joboffer_content
+            listeIndex = df_offre.index
+        else: 
+            df_offre_comparison = df_offre.loc[df_offre['dc_rome_id'] == coderome]
+            #df_offre_comparison = df_offre.loc[df_offre['dc_appelationrome_id'] == codeapp]
+            #listeIndex = np.delete(df_offre_comparison.index,indexoffre)
+            listeIndex = list(df_offre_comparison.index)
+            listeIndex = np.delete(listeIndex,listeIndex.index(indexoffre))
+            job_offerToAnalyse = joboffer_content[listeIndex]
         #print job_offerToAnalyse
         if len(job_offerToAnalyse) < number_neighbors:
             k = len(job_offerToAnalyse)
