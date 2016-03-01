@@ -195,7 +195,7 @@ print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainS
 print "Iteration over each test set"
 print "nbTestSet = %i" % nbTestSet
 
-for number_neighbors in range(1,40):
+for number_neighbors in range(50,51):
     nbSuccessTestSet = 0
     listeResult = []
     listeResult2 = []
