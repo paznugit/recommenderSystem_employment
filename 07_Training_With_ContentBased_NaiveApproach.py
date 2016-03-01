@@ -8,8 +8,6 @@ Created on Tue Jan 05 13:40:03 2016
 
 import pandas as pd
 from scipy.sparse import coo_matrix
-from scipy.sparse.linalg import svds
-from scipy import linalg as LA
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
@@ -157,40 +155,6 @@ if ponderationMetier:
     joboffer_content = np.hstack((listRome.reshape((len(listRome), 1)),joboffer_content))
 
 nbSuccessTestSet = 0
-nbSuccessTrainSet = 0
-
-'''# Iterate over each job offer to test
-print "Iteration over each train set"
-print "nbTrainSet = %i" % nbTrainSet
-for (indivId,joboffer_id) in listCoordinateTrainSet:
-     # We get the real offre_id
-    kc_offre = dictOffreConvert[joboffer_id]
-    offre = df_offre.loc[df_offre['kc_offre'] == kc_offre]
-    indexoffre = offre.index[0]
-    coderome = list(offre['dc_rome_id'])[0]
-    codeapp = list(offre['dc_appelationrome_id'])[0]
-    #print "#######################################"
-    #print "We deal wih job offer %s: %s %s" % (kc_offre,coderome,str(codeapp))
-    
-    df_offre_comparison = df_offre.loc[df_offre['dc_rome_id'] == coderome]
-    #df_offre_comparison = df_offre.loc[df_offre['dc_appelationrome_id'] == codeapp]
-    listeIndex = df_offre_comparison.index
-    
-    job_offerToAnalyse = joboffer_content[listeIndex]
-
-    if len(job_offerToAnalyse) < 20:
-        number_neighbors = len(job_offerToAnalyse)
-    nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='cosine').fit(job_offerToAnalyse)
-    distances, indices = nn.kneighbors(joboffer_content[indexoffre])
-     
-    listeKcOffre = list(df_offre.iloc[listeIndex[indices[0]]]['kc_offre'])
-    listeIdOffre = list(df_convertJobOffer.loc[df_convertJobOffer['KC_OFFRE_ID'].isin(listeKcOffre)]['JOBOFFER_ID'])
-    df_result =  df_utility.loc[df_utility['JOBOFFER_ID'].isin(listeIdOffre)].groupby('INDIV_ID')['JOBOFFER_ID'].count().reset_index()
-    setIndividusToRecommend = set(df_result.loc[df_result['JOBOFFER_ID'] >= 2]['INDIV_ID'])
-    if indivId in setIndividusToRecommend:
-        nbSuccessTrainSet += 1 
-print "nbSuccessTrainSet = %i" % nbSuccessTrainSet
-print "Taux de success Train Set: %1.1f" % (100*nbSuccessTrainSet/float(nbTrainSet))'''
         
 print "Iteration over each test set"
 print "nbTestSet = %i" % nbTestSet
@@ -258,42 +222,3 @@ for number_neighbors in range(1,40):
     print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
     print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
     print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
-
-'''listeResult = []
-listesize = []
-for joboffer_id in listJobOfferToTest:
-    # We get the real offre_id
-    kc_offre = dictOffreConvert[joboffer_id]
-    offre = df_offre.loc[df_offre['kc_offre'] == kc_offre]
-    indexoffre = offre.index[0]
-    coderome = list(offre['dc_rome_id'])[0]
-    codeapp = list(offre['dc_appelationrome_id'])[0]
-    print "#######################################"
-    print "We deal wih job offer %s: %s %s" % (kc_offre,coderome,str(codeapp))
-    
-    df_offre_comparison = df_offre.loc[df_offre['dc_rome_id'] == coderome]
-    #df_offre_comparison = df_offre.loc[df_offre['dc_appelationrome_id'] == codeapp]
-    listeIndex = df_offre_comparison.index
-    
-    job_offerToAnalyse = joboffer_content[listeIndex]
-
-    #print job_offerToAnalyse
-    if len(job_offerToAnalyse) < 20:
-        number_neighbors = len(job_offerToAnalyse)
-    nn = NearestNeighbors(n_neighbors=number_neighbors, algorithm='brute', metric='cosine').fit(job_offerToAnalyse)
-    distances, indices = nn.kneighbors(joboffer_content[indexoffre])
-     
-    listeKcOffre = list(df_offre.iloc[listeIndex[indices[0]]]['kc_offre'])
-    listeIdOffre = list(df_convertJobOffer.loc[df_convertJobOffer['KC_OFFRE_ID'].isin(listeKcOffre)]['JOBOFFER_ID'])
-    df_result =  df_utility.loc[df_utility['JOBOFFER_ID'].isin(listeIdOffre)].groupby('INDIV_ID')['JOBOFFER_ID'].count().reset_index()
-    setIndividusToRecommend = set(df_result.loc[df_result['JOBOFFER_ID'] >= 2]['INDIV_ID'])
-    #print "Liste des candidats auxquels on veut recommender l'offre:"
-    #print setIndividusToRecommend
-    #print df_utility.loc[df_utility['INDIV_ID'].isin(listeIndividusToRecommend)]
-    setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == joboffer_id]['INDIV_ID'])
-    #print "Liste des candidats ayant réellement postulé:"
-    #print setPostulantReel
-    listesize.append(len(setIndividusToRecommend))
-    if len(setIndividusToRecommend) != 0:
-        listeResult.append(len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))'''
-
