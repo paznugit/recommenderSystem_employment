@@ -33,6 +33,7 @@ cols = list(df_utility['JOBOFFER_ID'])
 vals = [float(x) for x in list(df_utility['SCORE'])]
 
 nbTestSet = 5000
+nbTrainSet = 15000
 listCoordinateTestSet = []
 
 # Creation of the test set
@@ -53,6 +54,8 @@ listCoordinateTrainSet = []
 for i in range(nbmec):
     if ((rows[i],cols[i])) not in listCoordinateTestSet:
         listCoordinateTrainSet.append((rows[i],cols[i]))
+        if i > nbTrainSet:
+            break
 print "Creation of train set OK"
 
 shape = (nbIndiv, nbOffre)
@@ -143,12 +146,6 @@ for k in listeParameters:
     print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
     print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
     print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
-    
-    #àrecomean = np.mean(listNbRecommend)
-    #print "Nombre d'individus teste: %1.1f" % len(listNbRecommend)
-    #print "Nombre de reco moyen par individu: %1.1f" % recomean
-    #print "Taux de reco: %1.1f" % (100*recomean/float(nbOffre))
-
 
 '''
 print "Computation of success in random data"

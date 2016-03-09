@@ -7,17 +7,13 @@ Created on Tue Jan 05 13:40:03 2016
 
 
 import pandas as pd
-from scipy.sparse import coo_matrix
-from scipy.sparse.linalg import svds
-from scipy import linalg as LA
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
-from sklearn import preprocessing
 from sklearn.feature_extraction import DictVectorizer as DV
 from scipy import spatial
 
-ponderationMetier = False
+ponderationMetier = True
+seuil = 20
 
 csv_input = '../input/dm_mec_21_ng_bo.csv'
 csv_jobofferdict__input = '../input/joboffer_dict_21.csv'
@@ -35,8 +31,8 @@ csv_rome_affinity_input = '../input/affinity_Rome_matrix.csv'
 def computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
                                      joboffer_content,joboffer_rome,joboffer_geo):
     similarity = 1-spatial.distance.cosine(userProfile_content, joboffer_content)
-    similarity *= (1-spatial.distance.cosine(userProfile_rome, joboffer_rome))
-    similarity *= (1-spatial.distance.cosine(userProfile_geo, joboffer_geo))
+    similarity = similarity * (1-spatial.distance.cosine(userProfile_rome, joboffer_rome))
+    similarity = similarity * (1-spatial.distance.cosine(userProfile_geo, joboffer_geo))
     return similarity
     
 # Extract the job offer
@@ -91,9 +87,9 @@ if ponderationMetier:
         rome2 = listeRome2[i]
         if rome1 in dictIndexRome:
             if rome2 in dictIndexRome:
-               romeAffMatrix[dictIndexRome[rome2],dictIndexRome[rome1]] = listeScore[i]
+               romeAffMatrix[dictIndexRome[rome2],dictIndexRome[rome1]] = listeScore[i]/float(100)
     # Creation of the new Rome Matrix
-    joboffer_rome = joboffer_rome.dot(romeAffMatrix)
+    joboffer_rome_aff = joboffer_rome.dot(romeAffMatrix) + joboffer_rome
 
 df_geo = pd.get_dummies(df_offre['dc_departementlieutravail'])
 joboffer_geo = df_geo.as_matrix()
@@ -166,9 +162,9 @@ for (indivId,jobOfferId) in listCoordinateTrainSet:
             profile_geo = joboffer_geo[indexOffre]
             first = False
         else:
-            profile_content += joboffer_content[indexOffre]
-            profile_rome += joboffer_rome[indexOffre]
-            profile_geo += joboffer_geo[indexOffre]
+            profile_content = profile_content + joboffer_content[indexOffre]
+            profile_rome = profile_rome + joboffer_rome[indexOffre]
+            profile_geo = profile_geo + joboffer_geo[indexOffre]
     if nboffre == 0:
         # Shouldn't happen... but just in case
         print "Division by zero!"
@@ -181,11 +177,11 @@ for (indivId,jobOfferId) in listCoordinateTrainSet:
     kc_offre_id = dictOffreConvert[jobOfferId]
     indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
     sim = computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
-                                            joboffer_content[indexOffre],joboffer_rome[indexOffre],joboffer_geo[indexOffre])
+                                            joboffer_content[indexOffre],joboffer_rome_aff[indexOffre],joboffer_geo[indexOffre])
     listTrainSetResult.append(sim)
 
 # Computation of seuilSuccess to have about 90% of success in train set
-q = 10
+q = 100 - seuil
 seuilSuccess = float(np.percentile(listTrainSetResult,q))
 print "Seuil de succes positionne a: %1.5f" % seuilSuccess
 
@@ -214,13 +210,16 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
         continue
     listeOffre.append(jobOfferId)
     
+    print "Dealing with jobOffer: %i" % len(listeOffre)
+    
     setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == jobOfferId]['INDIV_ID'])
     setIndividusToRecommend = set()
     
     # Creation of profile for each individual
     for indivId2 in range(nbIndiv):
+
         # Retrieval of the list of job offers and computation of the user profile
-        listJobOfferId = df_utility.loc[df_utility['INDIV_ID'] == indivId]['JOBOFFER_ID']
+        listJobOfferId = df_utility.loc[df_utility['INDIV_ID'] == indivId2]['JOBOFFER_ID']
         
         nboffre = 0
         first = True
@@ -238,9 +237,9 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
                 profile_geo = joboffer_geo[indexOffre]
                 first = False
             else:
-                profile_content += joboffer_content[indexOffre]
-                profile_rome += joboffer_rome[indexOffre]
-                profile_geo += joboffer_geo[indexOffre]
+                profile_content = profile_content + joboffer_content[indexOffre]
+                profile_rome = profile_rome + joboffer_rome[indexOffre]
+                profile_geo = profile_geo + joboffer_geo[indexOffre]
         if nboffre == 0:
             # Shouldn't happen... but just in case
             print "Division by zero!"
@@ -252,15 +251,29 @@ for (indivId,jobOfferId) in listCoordinateTestSet:
         kc_offre_id = dictOffreConvert[jobOfferId]
         indexOffre = dictKcOffre_IndexOffre[kc_offre_id]
         sim = computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userProfile_geo,
-                                                joboffer_content[indexOffre],joboffer_rome[indexOffre],joboffer_geo[indexOffre])
-        
+                                                joboffer_content[indexOffre],joboffer_rome_aff[indexOffre],joboffer_geo[indexOffre])
+
         if sim > seuilSuccess:
             setIndividusToRecommend.add(indivId2)
+        
+    if indivId in setIndividusToRecommend:
+        nbSuccessTestSet += 1
         
     listesize.append(len(setIndividusToRecommend))
     if len(setIndividusToRecommend) != 0:
         listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
     listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+    
+    if len(listeOffre) % 20 == 0:
+        print "###################################################"
+        print "nbSuccessTestSet = %i" % nbSuccessTestSet
+        print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(len(listeOffre)))
+        print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
+        print "Nombre d'offre test: %i" % len(listeOffre)
+        print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
+        print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
+        print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
+        print "###################################################"
 
 print "nbSuccessTestSet = %i" % nbSuccessTestSet
 print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(len(listeOffre)))

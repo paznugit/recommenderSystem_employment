@@ -105,32 +105,33 @@ vals = [float(x) for x in list(df_utility['SCORE'])]
 
 shape = (nbIndiv, nbOffre)
 
-'''nbTestSet = 5000
-#nbTrainSet = 1500
-listCoordinateTestSet = []
-
-# Creation of the test set
-print "Creation of test set"
-n = 0
-while n < nbTestSet:
-    rand = np.random.randint(0,nbmec)
-    if vals[rand] >= seuil_success:
-        vals[rand] = 0
-        n += 1
-        listCoordinateTestSet.append((rows[rand],cols[rand]))
-print "Creation of test set OK"'''
-
-'''# Creation of the train set
-print "Creation of train set"
-listCoordinateTrainSet = []
-for i in range(nbmec):
-    if ((rows[i],cols[i])) not in listCoordinateTestSet:
-        listCoordinateTrainSet.append((rows[i],cols[i]))
-        if i > nbTrainSet:
-            break
-
-nbTrainSet = len(listCoordinateTrainSet) 
-print "Creation of train set OK"'''
+if not findBestParam:
+    nbTestSet = 5000
+    nbTrainSet = 15000
+    listCoordinateTestSet = []
+    
+    # Creation of the test set
+    print "Creation of test set"
+    n = 0
+    while n < nbTestSet:
+        rand = np.random.randint(0,nbmec)
+        if vals[rand] >= seuil_success:
+            vals[rand] = 0
+            n += 1
+            listCoordinateTestSet.append((rows[rand],cols[rand]))
+    print "Creation of test set OK"'''
+    
+    '''# Creation of the train set
+    print "Creation of train set"
+    listCoordinateTrainSet = []
+    for i in range(nbmec):
+        if vals[rand] >= seuil_success:
+            listCoordinateTrainSet.append((rows[i],cols[i]))
+            if i > nbTrainSet:
+                break
+    
+    nbTrainSet = len(listCoordinateTrainSet) 
+    print "Creation of train set OK"
 
 
 '''shape = (6,5)
@@ -159,11 +160,11 @@ if findBestParam:
     print "Shape of Q: %s" % str(Q.shape)
     
     for lambda_r in [0.000001,0.00001,0.0001,0.001,0.01,0.1,0.5]:
-        for epsilon in [0.001,0.01,0.1,0.5,1]:
-            for niter in [50,100,200,500,1000,2000]:
+        for epsilon in [0.001,0.1,0.5,1,2,5,10]:
+            for niter in [1000]:
                 P_new,Q_new,loss = gradient(m, epsilon, lambda_r, niter, P_ini = np.copy(P), Q_ini = np.copy(Q), ndim = k,
                                lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
-                loss = loss[-1]
+                #loss = loss[-1]
                 print "########################"
                 print lambda_r
                 print epsilon
@@ -189,50 +190,61 @@ else:
     
     print loss
 
-'''listeResult = []
-listeResult2 = []
-listesize = []
-nbSuccessTestSet = 0
-nbSuccessTrainSet = 0
-print "k = %i" % k
-    
-# Computation of success in test set
-print "Computation of success in test set"
-print "nbTestSet = %i" % nbTestSet
-for (indiv,offre) in listCoordinateTestSet:
-    prediction = P[indiv,:].dot(Q[:,offre])
-    if prediction >= seuil_success:
-        nbSuccessTestSet += 1
-print "Computation of success in test set OK"
-print "nbSuccessTestSet = %i" % nbSuccessTestSet
-print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
-
-listeOffre = []
-# For each individual in test set, let's retrieve the list of job offer we would recommend
-listNbRecommend = []
-for (indiv,offre) in listCoordinateTestSet:
-    if offre in listeOffre:
-        # Already done: We continue
-        continue
-
-    listeOffre.append(offre)
-    
-    setIndividusToRecommend = set()
-    for individ in range(nbIndiv):
-        prediction = P[individ,:].dot(Q[:,offre])
+if not findBestParam:
+    listeResult = []
+    listeResult2 = []
+    listesize = []
+    nbSuccessTestSet = 0
+    print "k = %i" % k
+        
+    # Computation of prediction for train set
+    listTrainSetResult = []
+    for (indiv,offre) in listCoordinateTrainSet:
+        prediction = P[indiv,:].dot(Q[:,offre])
+        listTrainSetResult.append(prediction)
+            
+    # Computation of seuilSuccess to have about 90% of success in train set
+    q = 10
+    seuil_success = float(np.percentile(listTrainSetResult,q))
+    print "Seuil de succes positionne a: %1.5f" % seuil_success
+        
+    # Computation of success in test set
+    print "Computation of success in test set"
+    print "nbTestSet = %i" % nbTestSet
+    for (indiv,offre) in listCoordinateTestSet:
+        prediction = P[indiv,:].dot(Q[:,offre])
         if prediction >= seuil_success:
-            setIndividusToRecommend.add(individ)
+            nbSuccessTestSet += 1
+    print "Computation of success in test set OK"
+    print "nbSuccessTestSet = %i" % nbSuccessTestSet
+    print "Taux de success Test Set: %1.1f" % (100*nbSuccessTestSet/float(nbTestSet))
     
-    setPostulantReel = set(df_utility.loc[(df_utility['JOBOFFER_ID'] == offre) & (df_utility['SCORE'] >= seuil_success)]['INDIV_ID'])
-    listesize.append(len(setIndividusToRecommend))
-    if len(setIndividusToRecommend) != 0:
-        listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
-    listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
-
-print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
-print "Nombre d'offre test: %i" % len(listeOffre)
-print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
-print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
-print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)'''
+    listeOffre = []
+    # For each individual in test set, let's retrieve the list of job offer we would recommend
+    listNbRecommend = []
+    for (indiv,offre) in listCoordinateTestSet:
+        if offre in listeOffre:
+            # Already done: We continue
+            continue
+    
+        listeOffre.append(offre)
+        
+        setIndividusToRecommend = set()
+        for individ in range(nbIndiv):
+            prediction = P[individ,:].dot(Q[:,offre])
+            if prediction >= seuil_success:
+                setIndividusToRecommend.add(individ)
+        
+        setPostulantReel = set(df_utility.loc[(df_utility['JOBOFFER_ID'] == offre) & (df_utility['SCORE'] >= seuil_success)]['INDIV_ID'])
+        listesize.append(len(setIndividusToRecommend))
+        if len(setIndividusToRecommend) != 0:
+            listeResult.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setIndividusToRecommend)))
+        listeResult2.append(100*len(setPostulantReel.intersection(setIndividusToRecommend))/float(len(setPostulantReel)))
+    
+    print "Taille moyenne de la recommendation: %1.1f" % np.mean(listesize)
+    print "Nombre d'offre test: %i" % len(listeOffre)
+    print "Combien d'offres ont aboutis à une recommendation: %i" % len(listeResult)
+    print "Précision de la recommendation: %1.2f" % np.mean(listeResult)
+    print "Rappel de la recommendation: %1.2f" % np.mean(listeResult2)
 
 
