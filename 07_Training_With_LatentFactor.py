@@ -159,9 +159,9 @@ if findBestParam:
     print "Shape of P: %s" % str(P.shape)
     print "Shape of Q: %s" % str(Q.shape)
     
-    for lambda_r in [0.000001,0.00001,0.0001,0.001,0.01,0.1,0.5]:
-        for epsilon in [0.001,0.1,0.5,1,2,5,10]:
-            for niter in [1000]:
+    for lambda_r in [0.000001]:
+        for epsilon in [0.001]:
+            for niter in [3000]:
                 P_new,Q_new,loss = gradient(m, epsilon, lambda_r, niter, P_ini = np.copy(P), Q_ini = np.copy(Q), ndim = k,
                                lfun = loss_function, gr_lfun = gr_loss_function, stoch = stoch)
                 #loss = loss[-1]

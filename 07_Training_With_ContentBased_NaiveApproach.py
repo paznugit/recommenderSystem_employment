@@ -166,6 +166,11 @@ for number_neighbors in range(50,51):
     listesize = []
     listeOffre = []
     for (indivId,joboffer_id) in listCoordinateTestSet:
+        if joboffer_id in listeOffre:
+            # Already done: We continue
+            continue
+        listeOffre.append(joboffer_id)
+        
          # We get the real offre_id
         kc_offre = dictOffreConvert[joboffer_id]
         offre = df_offre.loc[df_offre['kc_offre'] == kc_offre]
@@ -204,10 +209,6 @@ for number_neighbors in range(50,51):
         if indivId in setIndividusToRecommend:
             nbSuccessTestSet += 1
             
-        if joboffer_id in listeOffre:
-            # Already done: We continue
-            continue
-        listeOffre.append(joboffer_id)
         setPostulantReel = set(df_utility.loc[df_utility['JOBOFFER_ID'] == joboffer_id]['INDIV_ID'])
         listesize.append(len(setIndividusToRecommend))
         if len(setIndividusToRecommend) != 0:
