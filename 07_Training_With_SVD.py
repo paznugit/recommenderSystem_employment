@@ -10,9 +10,9 @@ import pandas as pd
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import svds
 import numpy as np
-
+from numpy import genfromtxt
 # Parameter of this algorithm: The number of dimension used for SVD
-k = 2000
+k = 800
 rerandomize = False
 
 # Extract the utility matrix (link between individual and job offer)
@@ -81,11 +81,14 @@ P = (u.dot(np.diag(s)))
 Q = (np.diag(s)).dot(vt)
 print "Shape of P: %s" % str(P.shape)
 print "Shape of Q: %s" % str(Q.shape)
-
+np.savetxt("../input/P_ini_SVD.csv", P, delimiter=",")
+np.savetxt("../input/Q_ini_SVD.csv", Q, delimiter=",")
+#P = genfromtxt("../input/P_ini.csv", delimiter=',')
+#Q = genfromtxt("../input/Q_ini.csv", delimiter=',')
+    
 nbTrainSet = len(listCoordinateTrainSet) 
 
-listeParameters = [5,10,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
-
+listeParameters = [800]
 listPrecision = []
 listRappel = []
 listTestSetSuccess = []

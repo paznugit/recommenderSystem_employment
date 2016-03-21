@@ -17,7 +17,7 @@ from scipy import spatial
 
 rerandomize = False
 listNumberNeighbors = range(1,51)
-listPonderationMetier = [False,True]
+listPonderationMetier = [True]
 listSeuil = [2,3]
 
 # List of norm: l1,l2,cosine

@@ -13,7 +13,7 @@ from sklearn.feature_extraction import DictVectorizer as DV
 from scipy import spatial
 
 rerandomize = False
-ponderationMetier = True
+ponderationMetier = False
 seuilList = [5,10,15,20,30,40,50,60,70,80]
 seuil = 20
 
@@ -35,7 +35,7 @@ def computeSimilarityBetweenJobOffer(userProfile_content,userProfile_rome,userPr
     similarity = 1-spatial.distance.cosine(userProfile_content, joboffer_content)
     similarity = similarity * np.max(userProfile_rome*joboffer_rome)
     #similarity = similarity * (1-spatial.distance.cosine(userProfile_rome, joboffer_rome))
-    #similarity = similarity * (1-spatial.distance.cosine(userProfile_geo, joboffer_geo))
+    similarity = similarity * (1-spatial.distance.cosine(userProfile_geo, joboffer_geo))
     return similarity
     
 # Extract the job offer
